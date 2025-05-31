@@ -32,8 +32,8 @@ const MyFlats = () => {
   }
   return (
     <main className="container mx-auto mt-10">
-      <h2 className="text-3xl text-center mb-10">My <span className="text-indigo-700">Flats</span></h2>
-      <Button className="bg-indigo-700 shadow-md shadow-gray-700"><Link to={`/new-flat`} className="flex items-center gap-2">New Flat <span><IconPlus /></span></Link></Button>
+      <h2 className="text-3xl text-center mb-10">My <span className="text-primary">Flats</span></h2>
+      <Button className="bg-primary shadow-md shadow-gray-700"><Link to={`/new-flat`} className="flex items-center gap-2">New Flat <span><IconPlus /></span></Link></Button>
       <FlatTable flats={flats} onEdit/>
     </main>
   )

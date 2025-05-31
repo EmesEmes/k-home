@@ -167,20 +167,26 @@ const FlatTable: React.FC<FlatTableProps> = ({
   return (
     <main className="mt-10 container mx-auto">
       <div className="flex items-end justify-between">
-        <Input
+        
+        <div className="flex flex-col items-center gap-4">
+          <p>
+            Filter by <span className="text-primary">City</span>
+          </p>
+          <Input
           type="text"
           placeholder="City"
           className="w-60"
           ref={inputCity}
           onChange={handleChangeCity}
         />
+        </div>
         <form
           onSubmit={(e) => handleFilterPrice(e)}
           className="flex flex-col items-center gap-4"
           ref={form}
         >
           <p>
-            Filter by <span className="text-indigo-700">price</span>
+            Filter by <span className="text-primary">price</span>
           </p>
           <div className="flex items-center gap-3">
             <Input type="number" placeholder="Min" className="w-20" />
@@ -202,7 +208,7 @@ const FlatTable: React.FC<FlatTableProps> = ({
           ref={formArea}
         >
           <p>
-            Filter by <span className="text-indigo-700">Area</span>
+            Filter by <span className="text-primary">Area</span>
           </p>
           <div className="flex gap-3 items-center">
             <Input type="number" placeholder="Min Area" className="w-20" />
@@ -285,7 +291,7 @@ const FlatTable: React.FC<FlatTableProps> = ({
               <TableRow>
                 <TableCell
                   colSpan={10}
-                  className="text-center text-xl text-indigo-700"
+                  className="text-center text-xl text-primary"
                 >
                   No flats found
                 </TableCell>
@@ -296,7 +302,7 @@ const FlatTable: React.FC<FlatTableProps> = ({
                   <TableCell>
                     <Link
                       to={`/flat/${flat._id}`}
-                      className="text-blue-500 underline"
+                      className="text-blue-500 dark:text-primary underline"
                     >
                       View
                     </Link>
@@ -313,7 +319,7 @@ const FlatTable: React.FC<FlatTableProps> = ({
                     <TableCell className="w-20">
                       <Button
                         onClick={() => onToggleFavorite(flat.id)}
-                        className="w-full"
+                        className="w-full dark:bg-[#FAF9F6]"
                       >
                         {favorites.includes(flat._id) ? (
                           <span className="flex  items-center gap-4">
@@ -337,11 +343,11 @@ const FlatTable: React.FC<FlatTableProps> = ({
                     <TableCell>
                       <Button
                         onClick={() => onDelete(flat.id)}
-                        className="w-full flex items-center gap-4"
+                        className="w-full flex items-center gap-4 bg-red-700 hover:bg-red-900 text-white"
                       >
                         Delete
                         <span>
-                          <IconTrash className=" dark:text-black" />
+                          <IconTrash />
                         </span>
                       </Button>
                     </TableCell>
@@ -424,7 +430,7 @@ const FlatTable: React.FC<FlatTableProps> = ({
                     <Button>
                       <Link
                         to={`/flat/${flat._id}`}
-                        className="flex items-center gap-4"
+                        className="flex items-center gap-4 "
                       >
                         View{" "}
                         <span>

@@ -18,57 +18,35 @@ export class UserService {
   }
 
   async register(newUser: {
+    firstName: string;
+    lastName: string;
     email: string;
     password: string;
-    firstname: string;
-    lastname: string;
     phone: string;
     birthdate: string;
-    isadmin: boolean;
-    avatar?: any;
+    file?: File;
   }) {
-    const file = newUser.avatar;
-
-    const filePath = `public/${newUser.phone}/${file.name}`;
-
-    const { data, error } = await supabase.storage
-      .from("avatars")
-      .upload(filePath, file);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
     try {
-      const { data: user, error: authError } = await supabase.auth.signUp({
-        email: newUser.email,
-        password: newUser.password,
+      const formData = new FormData();
+
+      formData.append("firstName", newUser.firstName);
+      formData.append("lastName", newUser.lastName);
+      formData.append("email", newUser.email);
+      formData.append("password", newUser.password);
+      formData.append("phone", newUser.phone);
+      formData.append("birthdate", newUser.birthdate);
+
+      if (newUser.file) {
+        formData.append("image", newUser.file);
+      }
+
+      const response = await fetch("http://localhost:8080/auth/register", {
+        method: "POST",
+        body: formData,
       });
 
-      if (authError) {
-        console.error(authError);
-        return { success: false, error: authError.message };
-      }
-
-      const { error: profileError } = await supabase.from("profiles").insert([
-        {
-          id: user.user.id,
-          email: user.user.email,
-          password: newUser.password,
-          firstname: newUser.firstname,
-          lastname: newUser.lastname,
-          phone: newUser.phone,
-          birthdate: newUser.birthdate,
-          isadmin: newUser.isadmin,
-          avatar: data.path,
-        },
-      ]);
-
-      if (profileError) {
-        console.error(profileError);
-        return { success: false, error: profileError.message };
-      }
-      return { success: true, data: user };
+      const data = await response.json();
+      console.log("Respuesta del backend:", data);
     } catch (error) {
       console.error(error);
     }
@@ -86,7 +64,7 @@ export class UserService {
       return { success: true, user: data[0] };
     }
   }
-  
+
   async deleteUser(userId: string) {
     const { error } = await supabase.from("profiles").delete().eq("id", userId);
     if (error) {

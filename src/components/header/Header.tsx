@@ -21,7 +21,6 @@ import { Link, useLocation } from "react-router"; // Importa useLocation
 import { useUser } from "@/context/UserContext";
 import { Button } from "../ui/button";
 import { useLogout } from "@/services/logout";
-import { IconHomeFilled } from "@tabler/icons-react";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -30,20 +29,17 @@ export default function Header() {
   const location = useLocation();
 
   return (
-    <header className="bg-dark-light-primary">
+    <header className="bg-dark-light-primary dark:bg-primary">
       <nav
         aria-label="Global"
         className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8"
       >
         <div className="flex items-stretch lg:flex-1">
           <Link to="/" className="-m-1.5 p-1.5 flex items-center gap-x-2">
-            <span className="sr-only">Your Company</span>
-            <span>
-              <IconHomeFilled className="text-indigo-700 dark:text-white size-10" />
-            </span>
-            <span className="text-lg text-indigo-700 dark:text-white">
-              FlatFinder
-            </span>
+            
+            <span className="bg-[url(/logo.svg)] bg-no-repeat w-[10.2rem] h-12 dark:bg-[url(/logo-white.svg)]" />
+              
+            
           </Link>
         </div>
         <div className="flex lg:hidden">
@@ -63,7 +59,7 @@ export default function Header() {
             to="/"
             className={`text-sm/6 font-semibold ${
               location.pathname === "/"
-                ? "underline text-indigo-400"
+                ? "underline text-primary dark:text-white"
                 : "text-dark-white-primary"
             }`}
           >
@@ -74,7 +70,7 @@ export default function Header() {
               to="/new-flat"
               className={`text-sm/6 font-semibold ${
                 location.pathname === "/new-flat"
-                  ? "underline text-indigo-400"
+                  ? "underline text-primary dark:text-white"
                   : "text-dark-white-primary"
               }`}
             >
@@ -86,7 +82,7 @@ export default function Header() {
               to="/my-favorites"
               className={`text-sm/6 font-semibold ${
                 location.pathname === "/my-favorites"
-                  ? "underline text-indigo-400"
+                  ? "underline text-primary dark:text-white"
                   : "text-dark-white-primary"
               }`}
             >
@@ -98,8 +94,8 @@ export default function Header() {
               to="/my-flats"
               className={`text-sm/6 font-semibold ${
                 location.pathname === "/my-flats"
-                  ? "underline text-indigo-400"
-                  : "text-dark-white-primary"
+                  ? "underline text-primary dark:text-white"
+                  : "text-dark-white-primary "
               }`}
             >
               My Flats
@@ -190,7 +186,7 @@ export default function Header() {
                   to="/"
                   className={`-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold ${
                     location.pathname === "/"
-                      ? "text-indigo-600"
+                      ? "text-primary"
                       : "text-dark-white-primary"
                   } hover:bg-gray-50`}
                 >
@@ -200,7 +196,7 @@ export default function Header() {
                   to="/new-flat"
                   className={`-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold ${
                     location.pathname === "/new-flat"
-                      ? "text-indigo-600"
+                      ? "text-primary"
                       : "text-dark-white-primary"
                   } hover:bg-gray-50`}
                 >
@@ -211,7 +207,7 @@ export default function Header() {
                     to="/my-favorites"
                     className={`-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold ${
                       location.pathname === "/my-favorites"
-                        ? "text-indigo-600"
+                        ? "text-primary"
                         : "text-dark-white-primary"
                     } hover:bg-gray-50`}
                   >
@@ -223,7 +219,7 @@ export default function Header() {
                     to="/my-flats"
                     className={`-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold ${
                       location.pathname === "/my-flats"
-                        ? "text-indigo-600"
+                        ? "text-primary"
                         : "text-dark-white-primary"
                     } hover:bg-gray-50`}
                   >

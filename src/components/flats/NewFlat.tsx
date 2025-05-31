@@ -27,7 +27,7 @@ const NewFlat = () => {
     <main>
       <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black mt-10">
         <h2 className="font-bold text-xl">
-          Let's Create a <span className="text-indigo-700">New Flat</span>
+          Let's Create a <span className="text-primary">New Flat</span>
         </h2>
         <FlatForm onSubmit={handleSubmit} disableImageUpload={false}/>
       </div>

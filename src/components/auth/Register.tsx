@@ -167,33 +167,33 @@ const Register = () => {
     if (!form.current) return;
     
     const newUser = {
-      firstname: form.current.firstname.value,
-      lastname: form.current.lastname.value,
+      firstName: form.current.firstname.value,
+      lastName: form.current.lastname.value,
       phone: form.current.phone.value,
-      birthdate: form.current.birthdate.value,
       email: form.current.email.value,
       password: form.current.password.value,
-      isadmin: false,
-      avatar: form.current.avatar.files[0],
+      birthdate: form.current.birthdate.value,
+      file: form.current.avatar.files[0],
     }
 
 
     const createUser = new UserService();
     const example =await createUser.register(newUser);
-    if(example?.success){
-      toast({
-        title: "User created successfully",
-        description: "Verify your email to continue",
-      });
-      navigate("/login");
+    console.log(example)
+    // if(example?.success){
+    //   toast({
+    //     title: "User created successfully",
+    //     description: "Verify your email to continue",
+    //   });
+    //   navigate("/login");
 
-    } else {
-      toast({
-        title: "Error",
-        variant: "destructive",
-        description: example?.error,
-      });
-    }
+    // } else {
+    //   toast({
+    //     title: "Error",
+    //     variant: "destructive",
+    //     description: example?.error,
+    //   });
+    // }
   };
 
   if(userProfile) {
@@ -209,7 +209,7 @@ const Register = () => {
     <main className="flex flex-col items-center justify-center ">
       <div className="max-w-md w-full mx-auto rounded-none md:rounded-2xl p-4 md:p-8 shadow-input bg-white dark:bg-black mt-10">
         <h2 className="font-bold text-xl">
-          Welcome to <span className="text-indigo-700">FlatFinder</span>
+          Welcome to <span className="text-primary">FlatFinder</span>
         </h2>
         <p className="text-neutral-600 text-sm max-w-sm mt-2 dark:text-neutral-300">
           Sign up and start searching for the home of your dreams
@@ -291,7 +291,7 @@ const Register = () => {
           </LabelInputContainer>
 
           <button
-            className="bg-indigo-700 hover:bg-indigo-900 transition duration-300 w-full text-white rounded-md h-10 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]"
+            className="bg-primary hover:bg-primary/80 transition duration-300 w-full text-white rounded-md h-10 font-medium shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:shadow-[0px_1px_0px_0px_var(--zinc-800)_inset,0px_-1px_0px_0px_var(--zinc-800)_inset]"
             type="submit"
           >
             Sign up &rarr;
