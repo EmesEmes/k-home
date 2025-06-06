@@ -1,3 +1,4 @@
+// src/components/header/Header.tsx
 import { useState } from "react";
 import {
   Dialog,
@@ -17,16 +18,17 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "@/components/mode-ttogle";
-import { Link, useLocation } from "react-router"; // Importa useLocation
+import { Link, useLocation } from "react-router";
 import { useUser } from "@/context/UserContext";
 import { Button } from "../ui/button";
 import { useLogout } from "@/services/logout";
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { userProfile } = useUser();
+  const { currentUser } = useUser(); 
   const { handleLogout } = useLogout();
   const location = useLocation();
+
 
   return (
     <header className="bg-dark-light-primary dark:bg-primary">
@@ -36,12 +38,11 @@ export default function Header() {
       >
         <div className="flex items-stretch lg:flex-1">
           <Link to="/" className="-m-1.5 p-1.5 flex items-center gap-x-2">
-            
             <span className="bg-[url(/logo.svg)] bg-no-repeat w-[10.2rem] h-12 dark:bg-[url(/logo-white.svg)]" />
-              
-            
           </Link>
         </div>
+
+        {/* Botón de menú en vista móvil */}
         <div className="flex lg:hidden">
           <button
             type="button"
@@ -52,6 +53,8 @@ export default function Header() {
             <Bars3Icon aria-hidden="true" className="size-6" />
           </button>
         </div>
+
+        {/* Menú principal en desktop */}
         <PopoverGroup className="hidden lg:flex lg:gap-x-12">
           <Popover className="relative"></Popover>
 
@@ -65,7 +68,8 @@ export default function Header() {
           >
             Home
           </Link>
-          {userProfile && (
+
+          {currentUser && (
             <Link
               to="/new-flat"
               className={`text-sm/6 font-semibold ${
@@ -77,7 +81,7 @@ export default function Header() {
               New Flat
             </Link>
           )}
-          {userProfile && (
+          {currentUser && (
             <Link
               to="/my-favorites"
               className={`text-sm/6 font-semibold ${
@@ -89,7 +93,7 @@ export default function Header() {
               My Favorites
             </Link>
           )}
-          {userProfile && (
+          {currentUser && (
             <Link
               to="/my-flats"
               className={`text-sm/6 font-semibold ${
@@ -102,34 +106,48 @@ export default function Header() {
             </Link>
           )}
         </PopoverGroup>
+
+        {/* Lado derecho en desktop: modo oscuro + avatar o login */}
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:space-x-4 lg:items-center">
           <ModeToggle />
-          {userProfile ? (
+
+          {currentUser ? (
             <PopoverUI>
               <PopoverTrigger>
                 <div className="flex items-center gap-x-2">
-                  <span>{userProfile.firstname}</span>
+                  {/* Muestro el nombre usando firstName */}
+                  <span>Hello, {currentUser.firstName}</span>
                   <Avatar>
-                    <AvatarImage
-                      src={`https://ggdyznkijkikcjuonxzz.supabase.co/storage/v1/object/public/avatars/${userProfile.avatar}`}
-                    />
-                    <AvatarFallback>
-                      {userProfile.firstname}
-                      {userProfile.lastname}
-                    </AvatarFallback>
+                    {/*
+                      Si el usuario tiene `image`, la muestro.
+                      Si no, uso AvatarFallback con iniciales.
+                    */}
+                    {currentUser.image ? (
+                      <AvatarImage src={currentUser.image} />
+                    ) : (
+                      <AvatarFallback>
+  {userProfile?.firstname ? userProfile.firstname.charAt(0) : ""}
+  {userProfile?.lastname ? userProfile.lastname.charAt(0) : ""}
+</AvatarFallback>
+
+                    )}
                   </Avatar>
                 </div>
               </PopoverTrigger>
               <PopoverContent>
                 <div className="flex flex-col gap-y-2">
                   <Button>
-                    <Link to={`/profile/${userProfile.id}`}>Profile</Link>
+                    <Link to={`/profile/${currentUser._id}`}>Profile</Link>
                   </Button>
-                  {userProfile.isadmin && (
+
+                  
+                  {currentUser.role === "admin" && (
                     <Button>
                       <Link to="/admin">Users</Link>
                     </Button>
-                  )}
+                  )} 
+                 
+
                   <Button onClick={handleLogout}>Log out</Button>
                 </div>
               </PopoverContent>
@@ -144,6 +162,8 @@ export default function Header() {
           )}
         </div>
       </nav>
+
+      {/* Menú móvil (Dialog) */}
       <Dialog
         open={mobileMenuOpen}
         onClose={setMobileMenuOpen}
@@ -152,11 +172,11 @@ export default function Header() {
         <div className="fixed inset-0 z-10" />
         <DialogPanel className="fixed inset-y-0 right-0 z-10 w-full overflow-y-auto bg-white px-6 py-6 sm:max-w-sm sm:ring-1 sm:ring-gray-900/10">
           <div className="flex items-center justify-between">
-            <a href="#" className="-m-1.5 p-1.5">
-              <span className="sr-only">Your Company</span>
+            <a href="/" className="-m-1.5 p-1.5">
+              <span className="sr-only">K-Home</span>
               <img
-                alt=""
-                src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=600"
+                alt="K-Home Logo"
+                src="/logo.svg"
                 className="h-8 w-auto"
               />
             </a>
@@ -169,6 +189,7 @@ export default function Header() {
               <XMarkIcon aria-hidden="true" className="size-6" />
             </button>
           </div>
+
           <div className="mt-6 flow-root">
             <div className="-my-6 divide-y divide-gray-500/10">
               <div className="space-y-2 py-6">
@@ -182,6 +203,7 @@ export default function Header() {
                   </DisclosureButton>
                   <DisclosurePanel className="mt-2 space-y-2"></DisclosurePanel>
                 </Disclosure>
+
                 <Link
                   to="/"
                   className={`-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold ${
@@ -189,20 +211,25 @@ export default function Header() {
                       ? "text-primary"
                       : "text-dark-white-primary"
                   } hover:bg-gray-50`}
+                  onClick={() => setMobileMenuOpen(false)}
                 >
                   Home
                 </Link>
-                <Link
-                  to="/new-flat"
-                  className={`-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold ${
-                    location.pathname === "/new-flat"
-                      ? "text-primary"
-                      : "text-dark-white-primary"
-                  } hover:bg-gray-50`}
-                >
-                  New Flat
-                </Link>
-                {userProfile && (
+
+                {currentUser && (
+                  <Link
+                    to="/new-flat"
+                    className={`-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold ${
+                      location.pathname === "/new-flat"
+                        ? "text-primary"
+                        : "text-dark-white-primary"
+                    } hover:bg-gray-50`}
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    New Flat
+                  </Link>
+                )}
+                {currentUser && (
                   <Link
                     to="/my-favorites"
                     className={`-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold ${
@@ -210,11 +237,12 @@ export default function Header() {
                         ? "text-primary"
                         : "text-dark-white-primary"
                     } hover:bg-gray-50`}
+                    onClick={() => setMobileMenuOpen(false)}
                   >
                     My Favorites
                   </Link>
                 )}
-                {userProfile && (
+                {currentUser && (
                   <Link
                     to="/my-flats"
                     className={`-mx-3 block rounded-lg px-3 py-2 text-base/7 font-semibold ${
@@ -222,19 +250,37 @@ export default function Header() {
                         ? "text-primary"
                         : "text-dark-white-primary"
                     } hover:bg-gray-50`}
+                    onClick={() => setMobileMenuOpen(false)}
                   >
                     My Flats
                   </Link>
                 )}
               </div>
+
               <div className="py-6">
                 <ModeToggle />
-                <Link
-                  to="/login"
-                  className="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-dark-white-primary hover:bg-gray-50"
-                >
-                  Log in
-                </Link>
+
+                {currentUser ? (
+                  // Si el usuario está logueado, muestro un botón para cerrar sesión
+                  <Button
+                    className="-mx-3 block w-full rounded-lg px-3 py-2.5 text-base/7 font-semibold text-dark-white-primary hover:bg-gray-50"
+                    onClick={() => {
+                      handleLogout();
+                      setMobileMenuOpen(false);
+                    }}
+                  >
+                    Log out
+                  </Button>
+                ) : (
+                  // Si no está logueado, muestro el link a Login
+                  <Link
+                    to="/login"
+                    className="-mx-3 block rounded-lg px-3 py-2.5 text-base/7 font-semibold text-dark-white-primary hover:bg-gray-50"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    Log in
+                  </Link>
+                )}
               </div>
             </div>
           </div>

@@ -78,23 +78,6 @@ const FlatTable: React.FC<FlatTableProps> = ({
     setSearch(flats);
   }, [flats]);
 
-  // const handleChangeCity = async() => {
-  //   const search = intupCity.current?.value || "";
-  //   if(search.length === 0) {
-  //     setSearch(flats)
-  //   }
-  //   const filterFlats = async() => {
-
-  //     const flatsServices = new FlatsServices();
-  //     const response = await flatsServices.filterCity(search);
-  //     if(response.success) {
-  //       setSearch(response.flats)
-  //     }
-  //     console.log(response)
-  //   }
-
-  //   filterFlats();
-  // }
   const handleChangeCity = () => {
     const query = inputCity.current?.value.trim().toLowerCase() || "";
 
@@ -318,7 +301,7 @@ const FlatTable: React.FC<FlatTableProps> = ({
                   {onToggleFavorite && (
                     <TableCell className="w-20">
                       <Button
-                        onClick={() => onToggleFavorite(flat.id)}
+                        onClick={() => onToggleFavorite(flat._id)}
                         className="w-full dark:bg-[#FAF9F6]"
                       >
                         {favorites.includes(flat._id) ? (
@@ -390,9 +373,9 @@ const FlatTable: React.FC<FlatTableProps> = ({
           {search.map((flat) => (
             <Card className="w-[380px]" key={flat._id}>
               <CardHeader>
-                <div>_
+                <div>
                   <img
-                    src={`https://ggdyznkijkikcjuonxzz.supabase.co/storage/v1/object/public/flatsimages/${flat.images}`}
+                    src={`${flat.images[0]}`}
                     alt={flat.city}
                     className="rounded-xl"
                   />

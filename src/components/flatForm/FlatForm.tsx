@@ -1,3 +1,4 @@
+// src/components/flatForm/FlatForm.tsx
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -11,55 +12,56 @@ interface FlatFormProps {
   disableImageUpload?: boolean;
 }
 
-const FlatForm = ({ onSubmit, initialData,disableImageUpload }: FlatFormProps) => {
-  const { userProfile } = useUser();
+const FlatForm = ({ onSubmit, initialData, disableImageUpload }: FlatFormProps) => {
+  const { currentUser } = useUser(); 
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const { toast } = useToast();
   const form = useRef<HTMLFormElement>(null);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+    const files = Array.from(e.target.files || []).slice(0, 5); 
     const previews = files.map((file) => URL.createObjectURL(file));
     setImagePreviews(previews);
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-
     if (!form.current) return;
-    const imagesInput = form.current.images; 
-    const imageFile = imagesInput ? imagesInput.files[0] : null;
 
-    const updatedFlat = {
+    const imagesInput = form.current.images as HTMLInputElement; 
+    const files = imagesInput ? Array.from(imagesInput.files || []) : [];
+
+    const flatData: any = {
       city: form.current.city.value,
-      streetname: form.current.streetname.value,
-      streetnumber: form.current.streetnumber.value,
-      areasize: form.current.areasize.value,
-      yearbuilt: form.current.yearbuilt.value,
-      hasac: form.current.hasac.checked,
-      lat: form.current.lat.value,
-      lng: form.current.lng.value,
-      rentprice: form.current.rentprice.value,
-      dateavailable: form.current.dateavailable.value,
-      userid: userProfile.id,
-      images: imageFile || initialData?.images || null,
+      streetName: form.current.streetname.value,
+      streetNumber: form.current.streetnumber.value,
+      areaSize: form.current.areasize.value,
+      yearBuilt: form.current.yearbuilt.value,
+      hasAC: form.current.hasac.checked,
+      latitude: form.current.lat.value,
+      longitude: form.current.lng.value,
+      rentPrice: form.current.rentprice.value,
+      dateAvailable: form.current.dateavailable.value,
+      ownerId: currentUser?._id, 
+      images: files, 
     };
 
     try {
-      await onSubmit(updatedFlat);
+      await onSubmit(flatData);
       form.current.reset();
       setImagePreviews([]);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Error",
         variant: "destructive",
-        description: error.message,
+        description: error.message || "Something went wrong",
       });
     }
   };
 
   return (
-    <form className="my-8" onSubmit={handleSubmit} ref={form}>
+    <form className="my-8" onSubmit={handleSubmit} ref={form} encType="multipart/form-data">
+      {/* --- Campos de texto como antes --- */}
       <LabelInputContainer className="mb-4">
         <Label htmlFor="city">City</Label>
         <Input
@@ -136,7 +138,7 @@ const FlatForm = ({ onSubmit, initialData,disableImageUpload }: FlatFormProps) =
           <Input
             id="lat"
             placeholder="-0.13656401685736502"
-            type="string"
+            type="text"
             name="lat"
             defaultValue={initialData?.lat}
             required
@@ -147,7 +149,7 @@ const FlatForm = ({ onSubmit, initialData,disableImageUpload }: FlatFormProps) =
           <Input
             id="lng"
             placeholder="-78.46626533735454"
-            type="string"
+            type="text"
             name="lng"
             defaultValue={initialData?.lng}
             required
@@ -167,7 +169,7 @@ const FlatForm = ({ onSubmit, initialData,disableImageUpload }: FlatFormProps) =
           />
         </LabelInputContainer>
         <LabelInputContainer>
-          <Label htmlFor="dataavailable">Date Available</Label>
+          <Label htmlFor="dateavailable">Date Available</Label>
           <Input
             id="dateavailable"
             type="date"
@@ -177,18 +179,25 @@ const FlatForm = ({ onSubmit, initialData,disableImageUpload }: FlatFormProps) =
           />
         </LabelInputContainer>
       </div>
+
       {!disableImageUpload && (
         <LabelInputContainer>
-          <Label htmlFor="images">Images</Label>
+          <Label htmlFor="images">Images (máx. 5)</Label>
           <Input
             id="images"
             type="file"
             name="images"
             accept="image/*"
+            multiple
             onChange={handleImageChange}
           />
+          <p className="text-sm text-muted-foreground">
+            Selecciona hasta 5 fotos.
+          </p>
         </LabelInputContainer>
       )}
+
+      {/* Previsualizaciones */}
       <div className="grid grid-cols-3 gap-4 mb-4">
         {imagePreviews.map((src, index) => (
           <div key={index} className="relative">

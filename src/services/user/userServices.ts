@@ -4,17 +4,32 @@ export class UserService {
   constructor() {}
 
   async login(email: string, password: string) {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) {
-      console.log(error);
-      return { success: false, error: error.message };
-    }
+    try {
+      const response = await fetch("http://localhost:8080/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    console.log(data.user);
-    return { success: true, data };
+      const data = await response.json();
+
+      if (!data.success) {
+        return { success: false, error: data.message };
+      }
+
+      // extrae el token y el usuario
+      return {
+        success: true,
+        data: {
+          token: data.token,
+          user: data.user,
+        },
+      };
+    } catch (error) {
+      return { success: false, error: "Login failed" };
+    }
   }
 
   async register(newUser: {
@@ -52,18 +67,23 @@ export class UserService {
     }
   }
 
-  async getUserById(id: string) {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select()
-      .eq("id", id);
-
-    if (error) {
-      return { success: false, error: error.message };
-    } else {
-      return { success: true, user: data[0] };
+  async getUserById(id: string): Promise<{ success: boolean; user?: any; error?: string }> {
+  try {
+    const res = await fetch(`http://localhost:8080/users/${id}`);
+    if (!res.ok) {
+      const errorPayload = await res.json().catch(() => ({}));
+      return { success: false, error: errorPayload.message || "Error fetching user" };
     }
+    const result = await res.json();
+    if (result.success) {
+      return { success: true, user: result.data };
+    } else {
+      return { success: false, error: result.message || "User not found" };
+    }
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
+}
 
   async deleteUser(userId: string) {
     const { error } = await supabase.from("profiles").delete().eq("id", userId);

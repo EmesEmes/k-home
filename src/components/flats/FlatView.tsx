@@ -1,7 +1,11 @@
-import { FlatsServices } from "@/services/flats/flatsServices";
-import { UserService } from "@/services/user/userServices";
+// src/components/flats/FlatView.tsx
+
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router";
+import { FlatsServices } from "@/services/flats/flatsServices";
+import { UserService } from "@/services/user/userServices";
+import { MessagesServices } from "@/services/messages/messagesServices";
+import { useUser } from "@/context/UserContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Card,
@@ -12,8 +16,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Textarea } from "../ui/textarea";
-import { MessagesServices } from "@/services/messages/messagesServices";
-import { useUser } from "@/context/UserContext";
 import { Button } from "@/components/ui/button";
 import FlatMap from "../map/Map";
 import {
@@ -33,19 +35,19 @@ import {
 } from "@tabler/icons-react";
 
 interface Flat {
-  id: string;
-  userid: string;
+  _id: string;
+  ownerId: string;
   city: string;
-  streetname: string;
-  streetnumber: string;
-  areasize: number;
-  hasac: boolean;
-  lat: number;
-  lng: number;
-  yearbuilt: number;
-  rentprice: number;
-  dateavailable: string;
-  images: string;
+  streetName: string;
+  streetNumber: number;
+  areaSize: number;
+  hasAC: boolean;
+  latitude: number;
+  longitude: number;
+  yearBuilt: number;
+  rentPrice: number;
+  dateAvailable: string;
+  images: string[]; // asumimos que el backend devuelve un arreglo de rutas o un string con arreglo
 }
 
 interface Owner {
@@ -58,75 +60,103 @@ interface Owner {
 const FlatView = () => {
   const [flat, setFlat] = useState<Flat | null>(null);
   const [owner, setOwner] = useState<Owner | null>(null);
-  const [comments, setComments] = useState([]);
+  const [comments, setComments] = useState<any[]>([]);
   const [responses, setResponses] = useState<{ [key: string]: string }>({});
 
-  const { userProfile } = useUser();
-
-  const { idFlat } = useParams<{ id: string }>();
+  const { currentUser } = useUser();
+  const { idFlat } = useParams<{ idFlat: string }>();
   const form = useRef<HTMLFormElement>(null);
   const responseForm = useRef<HTMLFormElement>(null);
 
+  // Paso 1: Obtener el flat desde el backend
   useEffect(() => {
     const fetchFlat = async () => {
+      if (!idFlat) return;
       const flatService = new FlatsServices();
       const response = await flatService.getFlatById(idFlat);
-      setFlat(response.flat);
+      if (response.success && response.flat) {
+        // Adaptamos el objeto para que coincida con nuestra interfaz Flat
+        const f = response.flat;
+        setFlat({
+          _id: f._id,
+          ownerId: f.ownerId,
+          city: f.city,
+          streetName: f.streetName,
+          streetNumber: f.streetNumber,
+          areaSize: f.areaSize,
+          hasAC: f.hasAC,
+          latitude: f.latitude,
+          longitude: f.longitude,
+          yearBuilt: f.yearBuilt,
+          rentPrice: f.rentPrice,
+          dateAvailable: new Date(f.dateAvailable).toLocaleDateString(),
+          images: Array.isArray(f.images) ? f.images : [f.images],
+        });
+      } else {
+        setFlat(null);
+      }
     };
     fetchFlat();
   }, [idFlat]);
 
+  // Paso 2: Obtener la información del dueño
   useEffect(() => {
-    if (!flat || !flat.userid) return;
-
+    if (!flat || !flat.ownerId) return;
     const fetchOwner = async () => {
       const userService = new UserService();
-      const response = await userService.getUserById(flat.userid);
-
-      if (response && response.user) {
-        setOwner(response.user);
+      const response = await userService.getUserById(flat.ownerId);
+      if (response.success && response.user) {
+        setOwner({
+          firstname: response.user.firstName,
+          lastname: response.user.lastName,
+          email: response.user.email,
+          phone: response.user.phone,
+        });
+      } else {
+        setOwner(null);
       }
     };
-
     fetchOwner();
   }, [flat]);
 
+  // Paso 3: Obtener los comentarios para este flat
   useEffect(() => {
     if (!idFlat || !flat) return;
-
     const fetchComments = async () => {
       const messagesService = new MessagesServices();
-      const response = await messagesService.getMessagesByFlatId(flat.id);
-
+      const response = await messagesService.getMessagesByFlatId(flat._id);
       if (response.success && Array.isArray(response.comments)) {
         setComments(response.comments);
+      } else {
+        setComments([]);
       }
     };
-
     fetchComments();
   }, [idFlat, flat]);
 
+  // Paso 4: Función para enviar un nuevo comentario
   const handleComment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const newComment = form.current?.comment.value;
+    if (!form.current || !flat || !currentUser) return;
+    const newComment = form.current.comment.value;
     if (!newComment) return;
 
     const messagesService = new MessagesServices();
     const response = await messagesService.createComment({
-      flatId: flat.id,
-      userId: userProfile?.id,
+      flatId: flat._id,
+      userId: currentUser._id,
       comment: newComment,
-      username: `${userProfile?.firstname} ${userProfile?.lastname}`,
+      username: `${currentUser.firstName} ${currentUser.lastName}`,
     });
     if (response.success) {
-      console.log(response);
-      setComments([...comments, response.data[0]]);
-      form.current?.reset();
+      setComments([...comments, response.data]);
+      form.current.reset();
     } else {
       console.error("Error al enviar el comentario:", response.error);
     }
   };
 
+  // Paso 5: Función para manejar el cambio de texto en respuestas
   const handleResponseChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>,
     commentId: string
@@ -137,15 +167,13 @@ const FlatView = () => {
     }));
   };
 
+  // Paso 6: Función para enviar respuesta a un comentario
   const handleResponse = async (
     e: React.FormEvent<HTMLFormElement>,
     commentId: string
   ) => {
     e.preventDefault();
-
     const newResponse = responses[commentId];
-    console.log("Nueva respuesta para el comentario:", newResponse);
-
     if (!newResponse) {
       console.error("No se encontró una respuesta válida.");
       return;
@@ -166,8 +194,7 @@ const FlatView = () => {
               : comment
           )
         );
-        setResponses((prev) => ({ ...prev, [commentId]: "" })); // Limpiar el campo después de enviar
-        console.log("Respuesta enviada correctamente");
+        setResponses((prev) => ({ ...prev, [commentId]: "" }));
       } else {
         console.error("Error al enviar la respuesta:", response.error);
       }
@@ -176,16 +203,15 @@ const FlatView = () => {
     }
   };
 
-  const transformPhone = (phone) => {
-    
-      const transformedPhone = "593" + phone.slice(1);
-      return transformedPhone
-    
-  }
+  // Paso 7: Transformar número de teléfono para WhatsApp
+  const transformPhone = (phone: string) => {
+    return "593" + phone.slice(1);
+  };
 
-  console.log(comments);
+  console.log(comments)
 
-  if (!flat || !owner || comments === null) {
+  // Mostrar skeleton mientras cargan los datos
+  if (!flat || !owner) {
     return (
       <div className="container mx-auto mt-20">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -200,25 +226,27 @@ const FlatView = () => {
     );
   }
 
+  // Paso 8: Renderizado final
   return (
     <>
       <div className="container mx-auto mt-20 ">
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
             <img
-              src={`https://ggdyznkijkikcjuonxzz.supabase.co/storage/v1/object/public/flatsimages/${flat.images}`}
+              src={`${flat.images[0]}`}
               alt="flat"
               className="rounded-lg shadow-md"
             />
             <div>
-              <FlatMap lat={flat.lat} lng={flat.lng} />
+              <FlatMap lat={flat.latitude} lng={flat.longitude} />
             </div>
           </div>
-          {userProfile?.id === flat.userid && (
+
+          {currentUser?._id === flat.ownerId && (
             <Button className="mt-4 w-20 bg-indigo-700 shadow-md shadow-gray-700">
               <Link
-                to={`/flat-edit/${flat.id}`}
-                className="flex items-center gap-4 "
+                to={`/flat-edit/${flat._id}`}
+                className="flex items-center gap-4"
               >
                 Edit
                 <span>
@@ -227,6 +255,7 @@ const FlatView = () => {
               </Link>
             </Button>
           )}
+
           <Card className="">
             <CardHeader>
               <CardTitle>Flat Information</CardTitle>
@@ -234,21 +263,24 @@ const FlatView = () => {
                 This could be the flat of your dreams
               </CardDescription>
             </CardHeader>
+
             <CardContent className="grid gap-4">
               <CardDescription>
                 <span className="text-indigo-700 text-2xl">Ubication Info</span>
               </CardDescription>
               <div className="grid grid-cols-3">
-                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                   <span>
                     <IconMap2 className="text-indigo-700" stroke={2} />
                   </span>
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">City</p>
-                    <p className="text-sm text-muted-foreground">{flat.city}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {flat.city}
+                    </p>
                   </div>
                 </div>
-                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                   <span>
                     <IconMapPin className="text-indigo-700" stroke={2} />
                   </span>
@@ -257,11 +289,11 @@ const FlatView = () => {
                       Street Name
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {flat.streetname}
+                      {flat.streetName}
                     </p>
                   </div>
                 </div>
-                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                   <span>
                     <IconNumber className="text-indigo-700" stroke={2} />
                   </span>
@@ -270,20 +302,20 @@ const FlatView = () => {
                       Street Number
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {flat.streetnumber}
+                      {flat.streetNumber}
                     </p>
                   </div>
                 </div>
               </div>
+
               <CardDescription>
                 <span className="text-indigo-700 text-2xl">Flat Info</span>
               </CardDescription>
               <div className="grid grid-cols-3">
-                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                   <span>
                     <IconArrowsMaximize
-                      className="text-indigo-700"
-                      stroke={2}
+                      className="text-indigo-700" stroke={2}
                     />
                   </span>
                   <div className="space-y-1">
@@ -291,25 +323,22 @@ const FlatView = () => {
                       Area Size
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {flat.areasize}m2
+                      {flat.areaSize} m²
                     </p>
                   </div>
                 </div>
-                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                   <span>
-                    <IconAirConditioning
-                      className="text-indigo-700"
-                      stroke={2}
-                    />
+                    <IconAirConditioning className="text-indigo-700" stroke={2} />
                   </span>
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">Has AC?</p>
                     <p className="text-sm text-muted-foreground">
-                      {flat.hasac ? "Yes" : "No"}
+                      {flat.hasAC ? "Yes" : "No"}
                     </p>
                   </div>
                 </div>
-                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                   <span>
                     <IconCalendarStats className="text-indigo-700" stroke={2} />
                   </span>
@@ -318,13 +347,14 @@ const FlatView = () => {
                       Year Built
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {flat.yearbuilt}
+                      {flat.yearBuilt}
                     </p>
                   </div>
                 </div>
               </div>
+
               <div className="grid grid-cols-3">
-                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                   <span>
                     <IconCash className="text-indigo-700" stroke={2} />
                   </span>
@@ -333,11 +363,11 @@ const FlatView = () => {
                       Rent Price
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      ${flat.rentprice}
+                      ${flat.rentPrice}
                     </p>
                   </div>
                 </div>
-                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                   <span>
                     <IconCalendarWeek className="text-indigo-700" stroke={2} />
                   </span>
@@ -346,17 +376,18 @@ const FlatView = () => {
                       Date Available
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {flat.dateavailable}
+                      {flat.dateAvailable}
                     </p>
                   </div>
                 </div>
               </div>
+
               <div>
                 <CardDescription>
                   <span className="text-indigo-700 text-2xl">Owner Info</span>
                 </CardDescription>
                 <div>
-                  <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                  <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                     <span>
                       <IconUser className="text-indigo-700" stroke={2} />
                     </span>
@@ -370,9 +401,9 @@ const FlatView = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-3 mt-10">
-                  <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                  <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                     <span>
                       <IconPhone className="text-indigo-700" stroke={2} />
                     </span>
@@ -383,7 +414,7 @@ const FlatView = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                  <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                     <span>
                       <IconMail className="text-indigo-700" stroke={2} />
                     </span>
@@ -394,12 +425,15 @@ const FlatView = () => {
                       </p>
                     </div>
                   </div>
-                  <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 last:mb-0 last:pb-0 gap-4">
+                  <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                     <span>
                       <IconBrandWhatsapp className="text-indigo-700" stroke={2} />
                     </span>
                     <div className="space-y-1">
-                      <Link to={`https://wa.me/${transformPhone(owner.phone)}?text=¡Hola!%20Estoy%20visitando%20su%20sitio%20web%20y%20deseo%20más%20información"`} target="_blanks">
+                      <Link
+                        to={`https://wa.me/${transformPhone(owner.phone)}?text=¡Hola!%20Estoy%20visitando%20su%20sitio%20web%20y%20deseo%20más%20información`}
+                        target="_blank"
+                      >
                         <Button>Chat Owner</Button>
                       </Link>
                     </div>
@@ -411,7 +445,8 @@ const FlatView = () => {
           </Card>
         </div>
       </div>
-      {userProfile?.id !== flat.userid && (
+
+      {currentUser?._id !== flat.ownerId && (
         <form
           onSubmit={handleComment}
           className="container mx-auto mt-20"
@@ -427,18 +462,18 @@ const FlatView = () => {
       {comments.length > 0 ? (
         <div className="container mx-auto my-10">
           <h2 className="text-2xl font-bold mb-4">Comments</h2>
+          
           {comments.map((comment) => (
             <div
-              key={comment.id}
+              key={comment._id}
               className="rounded-lg p-4 shadow-md mb-4 container mx-auto"
             >
               <div className="flex justify-between flex-col">
                 <div className="text-left">
-                  <p className="font-bold">{comment.username}</p>
-                  <p>{comment.comment}</p>
-
+                  <p className="font-bold text-primary">{comment.username}</p>
+                  <p>{comment.content}</p>
                   <span className="text-sm text-gray-400">
-                    {comment.created_at}
+                    {comment.createAt}
                   </span>
                 </div>
                 <div className="text-right">
@@ -454,7 +489,7 @@ const FlatView = () => {
                   )}
                 </div>
               </div>
-              {userProfile?.id === flat.userid && (
+              {currentUser?._id === flat.ownerId && (
                 <form onSubmit={(e) => handleResponse(e, comment.id)}>
                   <span>Respond</span>
                   <Textarea

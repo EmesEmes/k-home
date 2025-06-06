@@ -8,14 +8,14 @@ import FlatTable from "../tableFlats/FlatTable";
 const Home = () => {
   const [flats, setFlats] = useState([]);
   const [favorites, setFavorites] = useState<string[]>([]);
-  const { userProfile } = useUser();
+  const { currentUser, token } = useUser();
   const { toast } = useToast();
 
   useEffect(() => {
     const getFlats = async () => {
       const flats = new FlatsServices();
       const example = await flats.getFlats();
-      console.log(example.flats)
+      console.log(example.flats);
       if (example.success) {
         setFlats(example.flats);
       } else {
@@ -26,53 +26,83 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-    const getFavorites = async () => {
-      const user = userProfile;
-      if (user) {
-        const flatsService = new FlatsServices();
-        const result = await flatsService.getFavorites(user.id);
-        if (result.success) {
-          console.log(result.favorites);
-          setFavorites(result.favorites);
-        } else {
-          console.log(result.error);
-        }
-      }
-    };
-    getFavorites();
-  }, [userProfile]);
+  const fetchFavorites = async () => {
+    if (!currentUser || !token) {
+      setFavorites([]);
+      return;
+    }
 
-  const toggleFavorite = async (flatId: string) => {
-    const user = userProfile;
-    if (userProfile === null) {
-          toast({
-            title: "Error",
-            variant: "destructive",
-            description: "You must be logged in to add a favorite",
-          });
-          return;
-        }
     const flatsService = new FlatsServices();
-    if (favorites.includes(flatId)) {
-      const result = await flatsService.removeFavorite(user.id, flatId);
-      if (result.success) {
-        setFavorites(favorites.filter((id) => id !== flatId));
-      } else {
-        console.log(result.error);
-      }
+    const result = await flatsService.getFavorites(currentUser._id, token);
+
+    if (result.success && result.data) {
+      // result.data es arreglo de Flat
+      const ids = (result.data as Flat[]).map((f) => f._id);
+      setFavorites(ids);
     } else {
-      const result = await flatsService.addFavorite(flatId, user.id, );
-      if (result.success) {
-        setFavorites([...favorites, flatId]);
-      } else {
-        console.log(result.error);
+      setFavorites([]);
+      if (!result.success) {
+        toast({
+          title: "Error",
+          variant: "destructive",
+          description: result.message || "No se pudieron cargar favoritos.",
+        });
       }
     }
   };
+
+  fetchFavorites();
+}, [currentUser, token, toast]);
+
+  const toggleFavorite = async (flatId: string) => {
+    console.log(flatId)
+    // 4.a) Verificamos que esté autenticado
+    if (!currentUser || !token) {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Debes iniciar sesión para marcar como favorito.",
+      });
+      return;
+    }
+
+    // 4.b) Llamamos al servicio que alterna el favorito
+    const flatsService = new FlatsServices();
+    const result = await flatsService.toggleFavorite(
+      currentUser._id,
+      flatId,
+      token
+    );
+
+    if (result.success) {
+      // 4.c) Si ya estaba en favoritos, lo quitamos; si no, lo agregamos
+      setFavorites((prev) =>
+        prev.includes(flatId)
+          ? prev.filter((id) => id !== flatId)
+          : [...prev, flatId]
+      );
+      toast({
+        title: prev.includes(flatId)
+          ? "Flat eliminado de favoritos"
+          : "Flat agregado a favoritos",
+      });
+    } else {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: result.message || "Error al alternar favorito.",
+      });
+    }
+  };
+  console.log(flats);
   return (
-    <>
-      <FlatTable flats={flats} favorites={favorites} onToggleFavorite={toggleFavorite} />
-    </>
+    <main>
+      <FlatTable
+        flats={flats}
+        favorites={favorites}
+        onToggleFavorite={toggleFavorite}
+      />
+    </main>
   );
 };
 

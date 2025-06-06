@@ -3,55 +3,30 @@ import { supabase } from "@/utils/supabaseClient";
 export class FlatsServices {
   constructor() {}
 
-  async createFlat(newFlat: {
-    city: string;
-    streetname: string;
-    streetnumber: number;
-    areasize: number;
-    yearbuilt: number;
-    hasac: string;
-    lat: number;
-    lng: number;
-    rentprice: number;
-    dateavailable: string;
-    userid: string;
-    images: any;
-  }) {
-    const file = newFlat.images;
-    const filePath = `public/${newFlat.userid}/${file.name}`;
-
-    const { data: dataImage, error: errorImage } = await supabase.storage
-      .from("flatsimages")
-      .upload(filePath, file);
-
-    if (errorImage) {
-      return { success: false, error: errorImage.message };
-    }
-
-    const { data, error } = await supabase
-      .from("flats")
-      .insert([
-        {
-          city: newFlat.city,
-          streetname: newFlat.streetname,
-          streetnumber: newFlat.streetnumber,
-          areasize: newFlat.areasize,
-          yearbuilt: newFlat.yearbuilt,
-          hasac: newFlat.hasac,
-          lat: newFlat.lat,
-          lng: newFlat.lng,
-          rentprice: newFlat.rentprice,
-          dateavailable: newFlat.dateavailable,
-          userid: newFlat.userid,
-          images: dataImage.path,
+  async createFlat(
+    formData: FormData,
+    token: string | null
+  ): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      const res = await fetch(`http://localhost:8080/flats`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // NOTA: No incluimos 'Content-Type' para multipart/form-data
         },
-      ])
-      .select();
+        body: formData,
+      });
 
-    if (error) {
+      const result = await res.json();
+
+      if (res.ok && result.success) {
+        return { success: true, data: result.data };
+      } else {
+        // Podrías devolver result.message si viene de tu backend
+        return { success: false, error: result.message || "Error creating flat" };
+      }
+    } catch (error: any) {
       return { success: false, error: error.message };
-    } else {
-      return { success: true, data };
     }
   }
 
@@ -78,82 +53,117 @@ export class FlatsServices {
 
   }
 
-  async addFavorite(flatId: string, userId: string) {
-    console.log("User ID:", userId);
-    console.log("Flat ID:", flatId);
-    const { data, error } = await supabase
-      .from("favoritesflats")
-      .insert([{ flatid: flatId, userid: userId }])
-      .select();
+  async toggleFavorite(
+    userId: string,
+    flatId: string,
+    token: string | null
+  ): Promise<{ success: boolean; message: string }> {
+    console.log(token)
+    console.log(userId)
+    console.log(flatId)
+    try {
+      const res = await fetch(`http://localhost:8080/favorites/toggle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ user: userId, flatId }),
+      });
 
-    if (error) {
-      return { success: false, error: error.message };
+      const result = await res.json();
+      console.log(result)
+      if (res.ok && result.success) {
+        return { success: true, message: result.message };
+      } else {
+        return { success: false, message: result.message || "Error toggling favorite" };
+      }
+    } catch (err: any) {
+      return { success: false, message: err.message };
+    }
+  }
+
+  async getFavorites(
+    userId: string,
+    token: string | null
+  ): Promise<{
+    success: boolean;
+    data?: any[];
+    pagination?: {
+      total: number;
+      page: number;
+      totalPages: number;
+      hasMore: boolean;
+    };
+    message?: string;
+  }> {
+    try {
+      const res = await fetch(`http://localhost:8080/favorites/${userId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        }
+      });
+      const result = await res.json();
+      if (res.ok && result.success) {
+        return {
+          success: true,
+          data: result.data,
+          pagination: result.pagination,
+        };
+      } else {
+        return { success: false, message: result.message || "Error fetching favorites" };
+      }
+    } catch (err: any) {
+      return { success: false, message: err.message };
+    }
+  }
+
+  // async getUserFavorites(userId: string) {
+  //   const { data, error } = await supabase
+  //     .from("favoritesflats")
+  //     .select("*")
+  //     .eq("userid", userId);
+
+  //   if (error) {
+  //     return { success: false, error: error.message };
+  //   }
+
+  //   const flatsIds = data.map((fav) => fav.flatid);
+
+  //   const { data: flats, error: errorFlats } = await supabase
+  //     .from("flats")
+  //     .select()
+  //     .in("id", flatsIds);
+
+  //   if (errorFlats) {
+  //     return { success: false, error: errorFlats.message };
+  //   }
+
+  //   return { success: true, flats };
+  // }
+
+  /**
+ * Obtiene un flat por su ID desde tu backend en lugar de Supabase.
+ * GET http://localhost:8080/flats/:flatId
+ */
+async getFlatById(flatId: string): Promise<{ success: boolean; flat?: any; error?: string }> {
+  try {
+    const res = await fetch(`http://localhost:8080/flats/${flatId}`);
+    if (!res.ok) {
+      const errorPayload = await res.json().catch(() => ({}));
+      return { success: false, error: errorPayload.message || "Error fetching flat" };
+    }
+    const result = await res.json();
+    if (result.success) {
+      return { success: true, flat: result.data };
     } else {
-      return { success: true, data };
+      return { success: false, error: result.message || "Flat not found" };
     }
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
+}
 
-  async removeFavorite(userId: string, flatId: string) {
-    const { data, error } = await supabase
-      .from("favoritesflats")
-      .delete()
-      .eq("userid", userId)
-      .eq("flatid", flatId);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-    return { success: true, data };
-  }
-
-  async getFavorites(userId: string) {
-    const { data, error } = await supabase
-      .from("favoritesflats")
-      .select("flatid")
-      .eq("userid", userId);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-    return { success: true, favorites: data.map((fav) => fav.flatid) };
-  }
-
-  async getUserFavorites(userId: string) {
-    const { data, error } = await supabase
-      .from("favoritesflats")
-      .select("*")
-      .eq("userid", userId);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    const flatsIds = data.map((fav) => fav.flatid);
-
-    const { data: flats, error: errorFlats } = await supabase
-      .from("flats")
-      .select()
-      .in("id", flatsIds);
-
-    if (errorFlats) {
-      return { success: false, error: errorFlats.message };
-    }
-
-    return { success: true, flats };
-  }
-
-  async getFlatById(flatId: string) {
-    const { data, error } = await supabase
-      .from("flats")
-      .select()
-      .eq("id", flatId);
-
-    if (error) {
-      return { success: false, error: error.message };
-    }
-
-    return { success: true, flat: data[0] };
-  }
 
   async getFlatsByUserId(userId: string) {
     const { data, error } = await supabase
