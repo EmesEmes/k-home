@@ -161,6 +161,7 @@ const FlatView = () => {
     e: React.ChangeEvent<HTMLTextAreaElement>,
     commentId: string
   ) => {
+    console.log(commentId)
     setResponses((prev) => ({
       ...prev,
       [commentId]: e.target.value,
@@ -173,6 +174,7 @@ const FlatView = () => {
     commentId: string
   ) => {
     e.preventDefault();
+    console.log(commentId)
     const newResponse = responses[commentId];
     if (!newResponse) {
       console.error("No se encontró una respuesta válida.");
@@ -208,7 +210,6 @@ const FlatView = () => {
     return "593" + phone.slice(1);
   };
 
-  console.log(comments)
 
   // Mostrar skeleton mientras cargan los datos
   if (!flat || !owner) {

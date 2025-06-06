@@ -1,8 +1,9 @@
 // src/components/flatForm/FlatForm.tsx
+import React, { useRef, useState, useEffect } from "react";
+import FlatMap from "@/components/map/Map"; // Ajusta la ruta según tu estructura
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useRef, useState } from "react";
 import { useUser } from "@/context/UserContext";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,14 +13,45 @@ interface FlatFormProps {
   disableImageUpload?: boolean;
 }
 
-const FlatForm = ({ onSubmit, initialData, disableImageUpload }: FlatFormProps) => {
-  const { currentUser } = useUser(); 
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+const FlatForm: React.FC<FlatFormProps> = ({
+  onSubmit,
+  initialData,
+  disableImageUpload,
+}) => {
+  const { currentUser } = useUser();
   const { toast } = useToast();
   const form = useRef<HTMLFormElement>(null);
 
+  // Estados para coordenadas
+  const [lat, setLat] = useState<number>(
+    initialData?.lat !== undefined ? initialData.lat : 0
+  );
+  const [lng, setLng] = useState<number>(
+    initialData?.lng !== undefined ? initialData.lng : 0
+  );
+  const [latText, setLatText] = useState<string>(
+    initialData?.lat !== undefined ? String(initialData.lat) : ""
+  );
+  const [lngText, setLngText] = useState<string>(
+    initialData?.lng !== undefined ? String(initialData.lng) : ""
+  );
+
+  // Sincronizar si viene initialData (modo edición)
+  useEffect(() => {
+    if (initialData?.lat !== undefined) {
+      setLat(initialData.lat);
+      setLatText(String(initialData.lat));
+    }
+    if (initialData?.lng !== undefined) {
+      setLng(initialData.lng);
+      setLngText(String(initialData.lng));
+    }
+  }, [initialData]);
+
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []).slice(0, 5); 
+    const files = Array.from(e.target.files || []).slice(0, 5);
     const previews = files.map((file) => URL.createObjectURL(file));
     setImagePreviews(previews);
   };
@@ -28,7 +60,7 @@ const FlatForm = ({ onSubmit, initialData, disableImageUpload }: FlatFormProps) 
     e.preventDefault();
     if (!form.current) return;
 
-    const imagesInput = form.current.images as HTMLInputElement; 
+    const imagesInput = form.current.images as HTMLInputElement;
     const files = imagesInput ? Array.from(imagesInput.files || []) : [];
 
     const flatData: any = {
@@ -38,18 +70,22 @@ const FlatForm = ({ onSubmit, initialData, disableImageUpload }: FlatFormProps) 
       areaSize: form.current.areasize.value,
       yearBuilt: form.current.yearbuilt.value,
       hasAC: form.current.hasac.checked,
-      latitude: form.current.lat.value,
-      longitude: form.current.lng.value,
+      latitude: lat,
+      longitude: lng,
       rentPrice: form.current.rentprice.value,
       dateAvailable: form.current.dateavailable.value,
-      ownerId: currentUser?._id, 
-      images: files, 
+      ownerId: currentUser?._id,
+      images: files,
     };
 
     try {
       await onSubmit(flatData);
       form.current.reset();
       setImagePreviews([]);
+      setLat(0);
+      setLng(0);
+      setLatText("");
+      setLngText("");
     } catch (error: any) {
       toast({
         title: "Error",
@@ -60,8 +96,13 @@ const FlatForm = ({ onSubmit, initialData, disableImageUpload }: FlatFormProps) 
   };
 
   return (
-    <form className="my-8" onSubmit={handleSubmit} ref={form} encType="multipart/form-data">
-      {/* --- Campos de texto como antes --- */}
+    <form
+      className="my-8"
+      onSubmit={handleSubmit}
+      ref={form}
+      encType="multipart/form-data"
+    >
+      {/* Campos de texto normales */}
       <LabelInputContainer className="mb-4">
         <Label htmlFor="city">City</Label>
         <Input
@@ -73,6 +114,7 @@ const FlatForm = ({ onSubmit, initialData, disableImageUpload }: FlatFormProps) 
           required
         />
       </LabelInputContainer>
+
       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
         <LabelInputContainer>
           <Label htmlFor="streetname">Street Name</Label>
@@ -97,6 +139,7 @@ const FlatForm = ({ onSubmit, initialData, disableImageUpload }: FlatFormProps) 
           />
         </LabelInputContainer>
       </div>
+
       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
         <LabelInputContainer>
           <Label htmlFor="areasize">Area Size</Label>
@@ -121,7 +164,9 @@ const FlatForm = ({ onSubmit, initialData, disableImageUpload }: FlatFormProps) 
           />
         </LabelInputContainer>
       </div>
+
       <div className="bg-gradient-to-r from-transparent via-neutral-300 dark:via-neutral-700 to-transparent my-8 h-[1px] w-full" />
+
       <LabelInputContainer className="flex flex-row space-x-2 items-center space-y-0 mb-6">
         <Label htmlFor="hasac">Has AC?</Label>
         <Input
@@ -131,16 +176,24 @@ const FlatForm = ({ onSubmit, initialData, disableImageUpload }: FlatFormProps) 
           defaultChecked={initialData?.hasac}
         />
       </LabelInputContainer>
+
       <div className="bg-gradient-to-r from-transparent via-neutral-300 dark:via-neutral-700 to-transparent my-8 h-[1px] w-full" />
+
+      {/* Inputs de latitud y longitud controlados */}
       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
         <LabelInputContainer>
           <Label htmlFor="lat">Latitude</Label>
           <Input
             id="lat"
-            placeholder="-0.13656401685736502"
+            placeholder="-0.136564"
             type="text"
             name="lat"
-            defaultValue={initialData?.lat}
+            value={latText}
+            onChange={(e) => {
+              setLatText(e.target.value);
+              const parsed = parseFloat(e.target.value);
+              if (!isNaN(parsed)) setLat(parsed);
+            }}
             required
           />
         </LabelInputContainer>
@@ -148,14 +201,37 @@ const FlatForm = ({ onSubmit, initialData, disableImageUpload }: FlatFormProps) 
           <Label htmlFor="lng">Longitude</Label>
           <Input
             id="lng"
-            placeholder="-78.46626533735454"
+            placeholder="-78.466265"
             type="text"
             name="lng"
-            defaultValue={initialData?.lng}
+            value={lngText}
+            onChange={(e) => {
+              setLngText(e.target.value);
+              const parsed = parseFloat(e.target.value);
+              if (!isNaN(parsed)) setLng(parsed);
+            }}
             required
           />
         </LabelInputContainer>
       </div>
+
+      {/* Mapa clicable para seleccionar ubicación */}
+      <div className="mb-6">
+        <LabelInputContainer>
+          <Label>Selecciona la ubicación en el mapa</Label>
+          <FlatMap
+            lat={lat || 0}
+            lng={lng || 0}
+            onClick={(coords) => {
+              setLat(coords.lat);
+              setLng(coords.lng);
+              setLatText(coords.lat.toFixed(6));
+              setLngText(coords.lng.toFixed(6));
+            }}
+          />
+        </LabelInputContainer>
+      </div>
+
       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
         <LabelInputContainer>
           <Label htmlFor="rentprice">Rent Price</Label>
@@ -197,7 +273,7 @@ const FlatForm = ({ onSubmit, initialData, disableImageUpload }: FlatFormProps) 
         </LabelInputContainer>
       )}
 
-      {/* Previsualizaciones */}
+      {/* Previsualizaciones de imágenes */}
       <div className="grid grid-cols-3 gap-4 mb-4">
         {imagePreviews.map((src, index) => (
           <div key={index} className="relative">
@@ -227,11 +303,7 @@ const LabelInputContainer = ({
   children: React.ReactNode;
   className?: string;
 }) => {
-  return (
-    <div className={cn("flex flex-col space-y-2 w-full", className)}>
-      {children}
-    </div>
-  );
+  return <div className={cn("flex flex-col space-y-2 w-full", className)}>{children}</div>;
 };
 
 export default FlatForm;
