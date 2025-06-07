@@ -81,17 +81,22 @@ export class MessagesServices {
   async updateResponse({
     commentId,
     response,
+    token
   }: {
     commentId: string;
     response: string;
+    token: string
   }): Promise<{ success: boolean; comment?: any; error?: string }> {
     try {
       const res = await fetch(`${this.baseUrl}/messages/${commentId}/`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ response }),
+        body: JSON.stringify({ response,
+          responseDate: Date.now()
+         }),
       });
 
       if (!res.ok) {

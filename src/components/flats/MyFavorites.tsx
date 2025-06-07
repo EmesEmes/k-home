@@ -1,41 +1,59 @@
+// src/components/flats/MyFavorites.tsx
+
 import React, { useEffect, useState } from "react";
 import { FlatsServices } from "@/services/flats/flatsServices";
-import FlatTable from "@/components/tableFlats/FlatTable"; // Tu componente reutilizable
+import FlatTable from "@/components/tableFlats/FlatTable";
 import { useUser } from "@/context/UserContext";
-import { useToast, toast } from '@/hooks/use-toast';
+import { useToast } from "@/hooks/use-toast";
 
-const MyFavorites = () => {
-  const { userProfile } = useUser();
+
+const MyFavorites: React.FC = () => {
+  const { currentUser, token } = useUser();
   const [flats, setFlats] = useState([]);
-  const toast = useToast();
+  const { toast } = useToast();
 
   useEffect(() => {
     const fetchFavorites = async () => {
-      if (!userProfile) return;
+      if (!currentUser || !token) {
+        setFlats([]);
+        return;
+      }
 
       const flatsService = new FlatsServices();
-      const result = await flatsService.getUserFavorites(userProfile.id);
+      const result = await flatsService.getUserFavorites(currentUser._id, token);
 
-      if (result.success) {
+      if (result.success && result.flats) {
         setFlats(result.flats);
       } else {
-        console.log(result.error);
+        console.error(result.error);
       }
     };
+
     fetchFavorites();
-  }, [userProfile]);
+  }, [currentUser, token]);
 
   const handleDelete = async (flatId: string) => {
+    if (!currentUser || !token) {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: "Debes iniciar sesión para quitar favoritos.",
+      });
+      return;
+    }
+    console.log(flatId)
+
     const flatsService = new FlatsServices();
-    const result = await flatsService.removeFavorite(userProfile.id, flatId);
+    const result = await flatsService.toggleFavorite(currentUser._id, flatId, token);
 
     if (result.success) {
-      setFlats((prevFlats) => prevFlats.filter((flat) => flat.id !== flatId));
+      setFlats((prevFlats) => prevFlats.filter((flat) => flat._id !== flatId));
+      toast({ title: "Favorito eliminado" });
     } else {
       toast({
         title: "Error",
         variant: "destructive",
-        description: result.error,
+        description: result.message || "No se pudo quitar de favoritos.",
       });
     }
   };
@@ -45,7 +63,8 @@ const MyFavorites = () => {
       <h1 className="text-2xl font-bold mb-4">My Favorite Flats</h1>
       <FlatTable
         flats={flats}
-        onDelete={handleDelete} // Pasa la función aquí
+        favorites={flats.map((f) => f._id)}
+        onDelete={handleDelete}
       />
     </div>
   );

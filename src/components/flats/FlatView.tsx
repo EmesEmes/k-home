@@ -63,7 +63,7 @@ const FlatView = () => {
   const [comments, setComments] = useState<any[]>([]);
   const [responses, setResponses] = useState<{ [key: string]: string }>({});
 
-  const { currentUser } = useUser();
+  const { currentUser, token } = useUser();
   const { idFlat } = useParams<{ idFlat: string }>();
   const form = useRef<HTMLFormElement>(null);
   const responseForm = useRef<HTMLFormElement>(null);
@@ -161,7 +161,6 @@ const FlatView = () => {
     e: React.ChangeEvent<HTMLTextAreaElement>,
     commentId: string
   ) => {
-    console.log(commentId)
     setResponses((prev) => ({
       ...prev,
       [commentId]: e.target.value,
@@ -171,11 +170,12 @@ const FlatView = () => {
   // Paso 6: Función para enviar respuesta a un comentario
   const handleResponse = async (
     e: React.FormEvent<HTMLFormElement>,
-    commentId: string
+    commentId: string, 
   ) => {
     e.preventDefault();
-    console.log(commentId)
+    
     const newResponse = responses[commentId];
+    console.log(token)
     if (!newResponse) {
       console.error("No se encontró una respuesta válida.");
       return;
@@ -186,6 +186,7 @@ const FlatView = () => {
       const response = await messagesService.updateResponse({
         commentId,
         response: newResponse,
+        token
       });
 
       if (response.success) {
@@ -377,7 +378,11 @@ const FlatView = () => {
                       Date Available
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {flat.dateAvailable}
+                      {new Date(flat.dateAvailable).toLocaleDateString("en-En", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}
                     </p>
                   </div>
                 </div>
@@ -482,7 +487,7 @@ const FlatView = () => {
                     <div>
                       <p>{comment.response}</p>
                       <span className="text-sm text-gray-400">
-                        {comment.responsetime}
+                        {comment.responseDate}
                       </span>
                     </div>
                   ) : (
@@ -491,15 +496,15 @@ const FlatView = () => {
                 </div>
               </div>
               {currentUser?._id === flat.ownerId && (
-                <form onSubmit={(e) => handleResponse(e, comment.id)}>
+                <form onSubmit={(e) => handleResponse(e, comment._id)}>
                   <span>Respond</span>
                   <Textarea
                     name="responseText"
-                    value={responses[comment.id] || ""}
-                    onChange={(e) => handleResponseChange(e, comment.id)}
+                    value={responses[comment._id] || ""}
+                    onChange={(e) => handleResponseChange(e, comment._id)}
                     required
                   />
-                  <Button type="submit">Send</Button>
+                  <Button type="submit" className="mt-6">Send</Button>
                 </form>
               )}
             </div>

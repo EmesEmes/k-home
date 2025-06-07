@@ -67,7 +67,9 @@ const FlatTable: React.FC<FlatTableProps> = ({
 }) => {
   const [search, setSearch] = useState(flats);
   const [view, setView] = useState<"table" | "cards">("table");
-  const [sortCriteria, setSortCriteria] = useState<"price" | "city" | "area" | null>(null);
+  const [sortCriteria, setSortCriteria] = useState<
+    "price" | "city" | "area" | null
+  >(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const inputCity = useRef<HTMLInputElement>(null);
@@ -150,18 +152,17 @@ const FlatTable: React.FC<FlatTableProps> = ({
   return (
     <main className="mt-10 container mx-auto">
       <div className="flex items-end justify-between">
-        
         <div className="flex flex-col items-center gap-4">
           <p>
             Filter by <span className="text-primary">City</span>
           </p>
           <Input
-          type="text"
-          placeholder="City"
-          className="w-60"
-          ref={inputCity}
-          onChange={handleChangeCity}
-        />
+            type="text"
+            placeholder="City"
+            className="w-60"
+            ref={inputCity}
+            onChange={handleChangeCity}
+          />
         </div>
         <form
           onSubmit={(e) => handleFilterPrice(e)}
@@ -297,7 +298,13 @@ const FlatTable: React.FC<FlatTableProps> = ({
                   <TableCell>{flat.yearBuilt}</TableCell>
                   <TableCell>{flat.hasAC ? "Yes" : "No"}</TableCell>
                   <TableCell>{flat.rentPrice}</TableCell>
-                  <TableCell>{flat.dateAvailable}</TableCell>
+                  <TableCell>
+                    {new Date(flat.dateAvailable).toLocaleDateString("en-EN", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </TableCell>
                   {onToggleFavorite && (
                     <TableCell className="w-20">
                       <Button
@@ -325,7 +332,7 @@ const FlatTable: React.FC<FlatTableProps> = ({
                   {onDelete && (
                     <TableCell>
                       <Button
-                        onClick={() => onDelete(flat.id)}
+                        onClick={() => onDelete(flat._id)}
                         className="w-full flex items-center gap-4 bg-red-700 hover:bg-red-900 text-white"
                       >
                         Delete
@@ -358,145 +365,158 @@ const FlatTable: React.FC<FlatTableProps> = ({
       ) : (
         <div>
           <div className="flex gap-4 mt-10 mb-6">
-        <Button onClick={() => handleSort("city")}>
-          Sort by City <IconSortDescending/>
-        </Button>
-        <Button onClick={() => handleSort("price")}>
-          Sort by Price <IconSortDescending/>
-        </Button>
-        <Button onClick={() => handleSort("area")}>
-          Sort by Area <IconSortDescending/>
-        </Button>
-      </div>
+            <Button onClick={() => handleSort("city")}>
+              Sort by City <IconSortDescending />
+            </Button>
+            <Button onClick={() => handleSort("price")}>
+              Sort by Price <IconSortDescending />
+            </Button>
+            <Button onClick={() => handleSort("area")}>
+              Sort by Area <IconSortDescending />
+            </Button>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 ">
-          
-          {search.map((flat) => (
-            <Card className="w-[380px]" key={flat._id}>
-              <CardHeader>
-                <div>
-                  <img
-                    src={`${flat.images[0]}`}
-                    alt={flat.city}
-                    className="rounded-xl"
-                  />
-                </div>
-                <CardTitle className="flex gap-2 items-center">
-                  <span>
-                    <IconMap2 className="text-indigo-700" stroke={2} />
-                  </span>
-                  {flat.city}
-                </CardTitle>
-                <CardDescription className="flex gap-2 items-center">
-                  <span>
-                    <IconMapPin className="size-4" stroke={2} />
-                  </span>
-                  {flat.streetName}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex justify-between">
-                <p className="flex gap-2">
-                  <span>
-                    <IconCash stroke={2} className="text-indigo-700" />
-                  </span>
-                  ${flat.rentPrice}
-                </p>
-                <p className="flex gap-2">
-                  <span>
-                    <IconCalendarWeek stroke={2} className="text-indigo-700" />
-                  </span>
-                  Available: <span>{flat.dateAvailable}</span>
-                </p>
-              </CardContent>
-              <CardFooter>
-                {onToggleFavorite && (
-                  <div className="flex gap-2 justify- items-center">
-                    <Button>
-                      <Link
-                        to={`/flat/${flat._id}`}
-                        className="flex items-center gap-4 "
-                      >
-                        View{" "}
-                        <span>
-                          <IconEye />
-                        </span>
-                      </Link>
-                    </Button>
-                    <Button
-                      onClick={() => onToggleFavorite(flat._id)}
-                      className="w-"
-                    >
-                      {favorites.includes(flat._id) ? (
-                        <span className="flex  items-center gap-4">
-                          Remove Favorite
-                          <span>
-                            <IconTrash />
-                          </span>
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-4">
-                          Add Favorite
-                          <span>
-                            <IconPlus />
-                          </span>
-                        </span>
+            {search.map((flat) => (
+              <Card className="w-[380px]" key={flat._id}>
+                <CardHeader>
+                  <div>
+                    <img
+                      src={`${flat.images[0]}`}
+                      alt={flat.city}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <CardTitle className="flex gap-2 items-center">
+                    <span>
+                      <IconMap2 className="text-indigo-700" stroke={2} />
+                    </span>
+                    {flat.city}
+                  </CardTitle>
+                  <CardDescription className="flex gap-2 items-center">
+                    <span>
+                      <IconMapPin className="size-4" stroke={2} />
+                    </span>
+                    {flat.streetName}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex justify-between">
+                  <p className="flex gap-2">
+                    <span>
+                      <IconCash stroke={2} className="text-indigo-700" />
+                    </span>
+                    ${flat.rentPrice}
+                  </p>
+                  <p className="flex gap-2">
+                    <span>
+                      <IconCalendarWeek
+                        stroke={2}
+                        className="text-indigo-700"
+                      />
+                    </span>
+                    Available:{" "}
+                    <span>
+                      {new Date(flat.dateAvailable).toLocaleDateString(
+                        "en-EN",
+                        {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        }
                       )}
-                    </Button>
-                  </div>
-                )}
-                {onDelete && (
-                  <div className="flex gap-2">
-                    <Button>
-                      <Link
-                        to={`/flat/${flat._id}`}
-                        className="flex items-center gap-4"
+                    </span>
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  {onToggleFavorite && (
+                    <div className="flex gap-2 justify- items-center">
+                      <Button>
+                        <Link
+                          to={`/flat/${flat._id}`}
+                          className="flex items-center gap-4 "
+                        >
+                          View{" "}
+                          <span>
+                            <IconEye />
+                          </span>
+                        </Link>
+                      </Button>
+                      <Button
+                        onClick={() => onToggleFavorite(flat._id)}
+                        className="w-"
                       >
-                        View{" "}
-                        <span>
-                          <IconEye className=" dark:text-black" />
-                        </span>
-                      </Link>
-                    </Button>
-                    <Button
-                      onClick={() => onDelete(flat._id)}
-                      className="w-full flex items-center gap-4"
-                    >
-                      Delete
-                      <span>
-                        <IconTrash className=" dark:text-black" />
-                      </span>
-                    </Button>
-                  </div>
-                )}
-                {onEdit && (
-                  <div className="flex gap-2">
-                    <Button>
-                      <Link
-                        to={`/flat/${flat._id}`}
-                        className="flex items-center gap-4"
+                        {favorites.includes(flat._id) ? (
+                          <span className="flex  items-center gap-4">
+                            Remove Favorite
+                            <span>
+                              <IconTrash />
+                            </span>
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-4">
+                            Add Favorite
+                            <span>
+                              <IconPlus />
+                            </span>
+                          </span>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                  {onDelete && (
+                    <div className="flex gap-2">
+                      <Button>
+                        <Link
+                          to={`/flat/${flat._id}`}
+                          className="flex items-center gap-4"
+                        >
+                          View{" "}
+                          <span>
+                            <IconEye className=" dark:text-black" />
+                          </span>
+                        </Link>
+                      </Button>
+                      <Button
+                        onClick={() => onDelete(flat._id)}
+                        className="w-full flex items-center gap-4"
                       >
-                        View
+                        Delete
                         <span>
-                          <IconEye />
+                          <IconTrash className=" dark:text-black" />
                         </span>
-                      </Link>
-                    </Button>
-                    <Button>
-                      <Link
-                        to={`/flat-edit/${flat._id}`}
-                        className="flex items-center gap-4"
-                      >
-                        Edit
-                        <span>
-                          <IconEdit />
-                        </span>
-                      </Link>
-                    </Button>
-                  </div>
-                )}
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                      </Button>
+                    </div>
+                  )}
+                  {onEdit && (
+                    <div className="flex gap-2">
+                      <Button>
+                        <Link
+                          to={`/flat/${flat._id}`}
+                          className="flex items-center gap-4"
+                        >
+                          View
+                          <span>
+                            <IconEye />
+                          </span>
+                        </Link>
+                      </Button>
+                      <Button>
+                        <Link
+                          to={`/flat-edit/${flat._id}`}
+                          className="flex items-center gap-4"
+                        >
+                          Edit
+                          <span>
+                            <IconEdit />
+                          </span>
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </CardFooter>
+              </Card>
+          
+            ))}
+          </div>
         </div>
       )}
     </main>

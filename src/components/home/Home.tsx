@@ -94,7 +94,6 @@ const Home = () => {
       });
     }
   };
-  console.log(flats);
   return (
     <main>
       <FlatTable
