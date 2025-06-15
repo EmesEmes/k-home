@@ -33,6 +33,7 @@ import {
   IconPhone,
   IconUser,
 } from "@tabler/icons-react";
+import FlatGallery from "../flatGallery/FlatGallery";
 
 interface Flat {
   _id: string;
@@ -170,12 +171,12 @@ const FlatView = () => {
   // Paso 6: Función para enviar respuesta a un comentario
   const handleResponse = async (
     e: React.FormEvent<HTMLFormElement>,
-    commentId: string, 
+    commentId: string
   ) => {
     e.preventDefault();
-    
+
     const newResponse = responses[commentId];
-    console.log(token)
+    console.log(token);
     if (!newResponse) {
       console.error("No se encontró una respuesta válida.");
       return;
@@ -186,7 +187,7 @@ const FlatView = () => {
       const response = await messagesService.updateResponse({
         commentId,
         response: newResponse,
-        token
+        token,
       });
 
       if (response.success) {
@@ -211,7 +212,6 @@ const FlatView = () => {
     return "593" + phone.slice(1);
   };
 
-
   // Mostrar skeleton mientras cargan los datos
   if (!flat || !owner) {
     return (
@@ -234,13 +234,17 @@ const FlatView = () => {
       <div className="container mx-auto mt-20 ">
         <div className="grid grid-cols-1 gap-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-            <img
+            {/* <img
               src={`${flat.images[0]}`}
               alt="flat"
               className="rounded-lg shadow-md"
-            />
+            /> */}
+            <FlatGallery images={flat.images}/>
             <div>
-              <FlatMap lat={flat.latitude} lng={flat.longitude} />
+              <FlatMap
+  center={{ lat: flat.latitude, lng: flat.longitude }} // centro del mapa en el flat
+  singleMarker={true}
+/>
             </div>
           </div>
 
@@ -277,9 +281,7 @@ const FlatView = () => {
                   </span>
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">City</p>
-                    <p className="text-sm text-muted-foreground">
-                      {flat.city}
-                    </p>
+                    <p className="text-sm text-muted-foreground">{flat.city}</p>
                   </div>
                 </div>
                 <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
@@ -317,7 +319,8 @@ const FlatView = () => {
                 <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                   <span>
                     <IconArrowsMaximize
-                      className="text-indigo-700" stroke={2}
+                      className="text-indigo-700"
+                      stroke={2}
                     />
                   </span>
                   <div className="space-y-1">
@@ -331,7 +334,10 @@ const FlatView = () => {
                 </div>
                 <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                   <span>
-                    <IconAirConditioning className="text-indigo-700" stroke={2} />
+                    <IconAirConditioning
+                      className="text-indigo-700"
+                      stroke={2}
+                    />
                   </span>
                   <div className="space-y-1">
                     <p className="text-sm font-medium leading-none">Has AC?</p>
@@ -378,11 +384,14 @@ const FlatView = () => {
                       Date Available
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {new Date(flat.dateAvailable).toLocaleDateString("en-En", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })}
+                      {new Date(flat.dateAvailable).toLocaleDateString(
+                        "en-En",
+                        {
+                          day: "numeric",
+                          month: "long",
+                          year: "numeric",
+                        }
+                      )}
                     </p>
                   </div>
                 </div>
@@ -433,11 +442,16 @@ const FlatView = () => {
                   </div>
                   <div className="mb-4 grid grid-cols-[25px_1fr] items-center pb-4 gap-4">
                     <span>
-                      <IconBrandWhatsapp className="text-indigo-700" stroke={2} />
+                      <IconBrandWhatsapp
+                        className="text-indigo-700"
+                        stroke={2}
+                      />
                     </span>
                     <div className="space-y-1">
                       <Link
-                        to={`https://wa.me/${transformPhone(owner.phone)}?text=¡Hola!%20Estoy%20visitando%20su%20sitio%20web%20y%20deseo%20más%20información`}
+                        to={`https://wa.me/${transformPhone(
+                          owner.phone
+                        )}?text=¡Hola!%20Estoy%20visitando%20su%20sitio%20web%20y%20deseo%20más%20información`}
                         target="_blank"
                       >
                         <Button>Chat Owner</Button>
@@ -468,7 +482,7 @@ const FlatView = () => {
       {comments.length > 0 ? (
         <div className="container mx-auto my-10">
           <h2 className="text-2xl font-bold mb-4">Comments</h2>
-          
+
           {comments.map((comment) => (
             <div
               key={comment._id}
@@ -504,7 +518,9 @@ const FlatView = () => {
                     onChange={(e) => handleResponseChange(e, comment._id)}
                     required
                   />
-                  <Button type="submit" className="mt-6">Send</Button>
+                  <Button type="submit" className="mt-6">
+                    Send
+                  </Button>
                 </form>
               )}
             </div>

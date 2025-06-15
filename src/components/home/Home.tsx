@@ -4,6 +4,9 @@ import { FlatsServices } from "@/services/flats/flatsServices";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/context/UserContext";
 import FlatTable from "../tableFlats/FlatTable";
+import Model from "../3d-model/Model";
+import { defineConfig } from 'vite';
+import FlatMap from "../map/Map";
 
 const Home = () => {
   const [flats, setFlats] = useState([]);
@@ -95,13 +98,52 @@ const Home = () => {
     }
   };
   return (
+    <>
+    <div className="relative mb-12">
+        <div className="w-full h-[500px] rounded-xl overflow-hidden">
+          <img
+            src="/hero.png"
+            alt="Beautiful vacation destination"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-40"></div>
+        </div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center text-white w-full max-w-3xl px-4">
+          <h1 className="text-4xl md:text-5xl font-bold mb-6 drop-shadow-lg uppercase">
+            Find your <span className="text-primary">happy place</span>
+          </h1>
+          <p className="text-xl mb-8 drop-shadow-md max-w-xl mx-auto">
+            Discover unique homes and experiences around the world.
+          </p>
+        </div>
+      </div>
     <main>
+      <div className="container mx-auto h-[80vh] mb-40">
+        <Model />
+      </div>
+      <FlatMap
+  center={ { lat: -0.18, lng: -78.47 }} // Quito como fallback
+  flats={flats}
+/>
       <FlatTable
         flats={flats}
         favorites={favorites}
         onToggleFavorite={toggleFavorite}
       />
     </main>
+    <footer className="bg-primary ">
+      <div className="grid grid-cols-2 p-6 items-center container mx-auto">
+        <div>
+          <img src="/logo-white.svg" alt="LogoBlanco" />
+        </div>
+        <div>
+          <p className="text-white">
+            Copyright © 2025 EI Solutions, Todos los derechos reservados.
+          </p>
+        </div>
+      </div>
+    </footer>
+    </>
   );
 };
 

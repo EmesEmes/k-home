@@ -1,15 +1,25 @@
-// src/components/Map.tsx (antes: FlatMap.tsx)
 import React from "react";
-import { MapContainer, TileLayer, Marker, useMapEvent } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, useMapEvent, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
-interface FlatMapProps {
+// Tipo de un flat
+interface Flat {
+  id?: string;
+  title?: string;
   lat: number;
   lng: number;
-  onClick?: (coords: { lat: number; lng: number }) => void;
 }
 
+// Props del componente
+interface FlatMapProps {
+  center: { lat: number; lng: number };        // Ubicación central del mapa
+  flats?: Flat[];                              // Lista de flats (opcional)
+  singleMarker?: boolean;                      // Muestra solo un marcador en center
+  onClick?: (coords: { lat: number; lng: number }) => void; // Click handler (opcional)
+}
+
+// Ícono personalizado
 const customIcon = new L.Icon({
   iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
   iconSize: [25, 41],
@@ -17,32 +27,41 @@ const customIcon = new L.Icon({
   popupAnchor: [1, -34],
 });
 
-
-function ClickHandler({
-  onClick,
-}: {
-  onClick: (coords: { lat: number; lng: number }) => void;
-}) {
-  
+// Componente para manejar clicks en el mapa
+function ClickHandler({ onClick }: { onClick: (coords: { lat: number; lng: number }) => void }) {
   useMapEvent("click", (e) => {
     onClick({ lat: e.latlng.lat, lng: e.latlng.lng });
   });
   return null;
 }
 
-const FlatMap: React.FC<FlatMapProps> = ({ lat, lng, onClick }) => {
+// Componente principal del mapa
+const FlatMap: React.FC<FlatMapProps> = ({ center, flats = [], singleMarker = false, onClick }) => {
+  console.log("FlatMap props:", { center, flats });
+
+  if (!center) {
+    return <p>Error: El centro del mapa no está definido.</p>;
+  }
   return (
     <MapContainer
-      center={[lat, lng]}
-      zoom={12}
+      center={[center.lat, center.lng]} 
+      zoom={13}
       className="h-96 w-full rounded-lg shadow-md"
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
+      {singleMarker ? (
+        <Marker position={[center.lat, center.lng]} icon={customIcon}>
+          <Popup>Ubicación seleccionada</Popup>
+        </Marker>
+      ) : (
+        flats.map((flat, idx) => (
+          <Marker key={flat._id ?? idx} position={[flat.latitude, flat.longitude]} icon={customIcon}>
+            <Popup>{flat.title ?? "Flat disponible"}</Popup>
+          </Marker>
+        ))
+      )}
 
-      <Marker position={[lat, lng]} icon={customIcon} />
-
-    
       {onClick && <ClickHandler onClick={onClick} />}
     </MapContainer>
   );

@@ -20,10 +20,13 @@
     "@radix-ui/react-popover": "^1.1.5",
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-toast": "^1.2.5",
+    "@react-three/drei": "^9.122.0",
+    "@react-three/fiber": "^8.18.0",
     "@supabase/supabase-js": "^2.48.1",
     "@tabler/icons-react": "^3.29.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "keen-slider": "^6.8.6",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.474.0",
     "motion": "^12.0.5",
@@ -32,7 +35,8 @@
     "react-leaflet": "^4.2.1",
     "react-router": "^7.1.3",
     "tailwind-merge": "^2.6.0",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "three": "^0.160.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.17.0",

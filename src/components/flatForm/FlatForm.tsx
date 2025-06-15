@@ -220,15 +220,15 @@ const FlatForm: React.FC<FlatFormProps> = ({
         <LabelInputContainer>
           <Label>Selecciona la ubicación en el mapa</Label>
           <FlatMap
-            lat={lat || 0}
-            lng={lng || 0}
-            onClick={(coords) => {
-              setLat(coords.lat);
-              setLng(coords.lng);
-              setLatText(coords.lat.toFixed(6));
-              setLngText(coords.lng.toFixed(6));
-            }}
-          />
+  center={{ lat: lat || -0.18, lng: lng || -78.47 }} // Quito como fallback
+  singleMarker={true}
+  onClick={(coords) => {
+    setLat(coords.lat);
+    setLng(coords.lng);
+    setLatText(coords.lat.toFixed(6));
+    setLngText(coords.lng.toFixed(6));
+  }}
+/>
         </LabelInputContainer>
       </div>
 
