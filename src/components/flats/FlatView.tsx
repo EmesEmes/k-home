@@ -244,6 +244,7 @@ const FlatView = () => {
               <FlatMap
   center={{ lat: flat.latitude, lng: flat.longitude }} // centro del mapa en el flat
   singleMarker={true}
+  zoom={18}
 />
             </div>
           </div>

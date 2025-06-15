@@ -13,10 +13,11 @@ interface Flat {
 
 // Props del componente
 interface FlatMapProps {
-  center: { lat: number; lng: number };        // Ubicación central del mapa
-  flats?: Flat[];                              // Lista de flats (opcional)
-  singleMarker?: boolean;                      // Muestra solo un marcador en center
-  onClick?: (coords: { lat: number; lng: number }) => void; // Click handler (opcional)
+  center: { lat: number; lng: number };    
+  flats?: Flat[];
+  singleMarker?: boolean;
+  onClick?: (coords: { lat: number; lng: number }) => void;
+  zoom?: number;
 }
 
 // Ícono personalizado
@@ -36,7 +37,7 @@ function ClickHandler({ onClick }: { onClick: (coords: { lat: number; lng: numbe
 }
 
 // Componente principal del mapa
-const FlatMap: React.FC<FlatMapProps> = ({ center, flats = [], singleMarker = false, onClick }) => {
+const FlatMap: React.FC<FlatMapProps> = ({ center, flats = [], singleMarker = false, onClick, zoom }) => {
   console.log("FlatMap props:", { center, flats });
 
   if (!center) {
@@ -45,7 +46,7 @@ const FlatMap: React.FC<FlatMapProps> = ({ center, flats = [], singleMarker = fa
   return (
     <MapContainer
       center={[center.lat, center.lng]} 
-      zoom={13}
+      zoom={zoom}
       className="h-96 w-full rounded-lg shadow-md"
     >
       <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />

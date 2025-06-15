@@ -124,6 +124,7 @@ const Home = () => {
       <FlatMap
   center={ { lat: -0.18, lng: -78.47 }} // Quito como fallback
   flats={flats}
+  zoom={7}
 />
       <FlatTable
         flats={flats}

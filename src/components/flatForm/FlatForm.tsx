@@ -222,6 +222,7 @@ const FlatForm: React.FC<FlatFormProps> = ({
           <FlatMap
   center={{ lat: lat || -0.18, lng: lng || -78.47 }} // Quito como fallback
   singleMarker={true}
+  zoom={6}
   onClick={(coords) => {
     setLat(coords.lat);
     setLng(coords.lng);
