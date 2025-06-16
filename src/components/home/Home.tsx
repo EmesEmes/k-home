@@ -119,11 +119,24 @@ const Home = () => {
         </div>
       </div>
       <main>
-        <div className="container mx-auto h-[80vh] mb-40">
+        <h1 className="text-6xl text-center mb-8">
+          Discover your next home with {" "}
+          <span className="inline-block relative font-bold text-[#006BE3]">
+            K-Home
+            <img
+              src={"/curve.png"}
+              width={624}
+              height={80}
+              alt="brainwave logo"
+              className="absolute top-full left-0 w-full xl:-mt-2"
+            />
+          </span>
+        </h1>
+        <div className="container mx-auto h-[80vh] mb-40 border-[4px] border-[#006BE3] rounded-lg">
           <Model />
         </div>
         <div className="bg-gradient-to-r from-indigo-400 to-cyan-400 py-8">
-          <PremiumFlats flats={flats}/>
+          <PremiumFlats flats={flats} />
         </div>
         <div className="max-w-[1200px] mx-auto mt-10">
           <FlatMap
