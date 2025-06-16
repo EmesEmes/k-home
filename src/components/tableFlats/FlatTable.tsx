@@ -29,13 +29,13 @@ import {
   IconTable,
   IconLayoutDashboard,
   IconSortDescending,
-} from "@tabler/icons-react";
+} from "@/components/icons";
 
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router";
 import { Input } from "../ui/input";
 import { useEffect, useRef, useState } from "react";
-// import { FlatsServices } from "@/services/flats/flatsServices";
+import axios from "axios";
 
 interface Flat {
   _id: string;
@@ -47,11 +47,10 @@ interface Flat {
   hasAC: boolean;
   rentPrice: number;
   dateAvailable: string;
-  images: string;
+  images: string[];
 }
 
 interface FlatTableProps {
-  flats: Flat[];
   favorites?: string[];
   onToggleFavorite?: (flatId: string) => void;
   onDelete?: (flatId: string) => void;
@@ -59,17 +58,15 @@ interface FlatTableProps {
 }
 
 const FlatTable: React.FC<FlatTableProps> = ({
-  flats,
   favorites = [],
   onToggleFavorite,
   onDelete,
   onEdit,
 }) => {
-  const [search, setSearch] = useState(flats);
+  const [flats, setFlats] = useState<Flat[]>([]);
+  const [search, setSearch] = useState<Flat[]>([]);
   const [view, setView] = useState<"table" | "cards">("table");
-  const [sortCriteria, setSortCriteria] = useState<
-    "price" | "city" | "area" | null
-  >(null);
+  const [sortCriteria, setSortCriteria] = useState<"price" | "city" | "area" | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
   const inputCity = useRef<HTMLInputElement>(null);
@@ -77,21 +74,28 @@ const FlatTable: React.FC<FlatTableProps> = ({
   const formArea = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
-    setSearch(flats);
-  }, [flats]);
+    fetchFlats();
+  }, []);
+
+  const fetchFlats = async () => {
+    try {
+      const res = await axios.get("http://localhost:8080/flats");
+      setFlats(res.data.data);
+      setSearch(res.data.data);
+    } catch (err) {
+      console.error("Error fetching flats", err);
+    }
+  };
 
   const handleChangeCity = () => {
     const query = inputCity.current?.value.trim().toLowerCase() || "";
-
     if (query.length === 0) {
       setSearch(flats);
       return;
     }
-
     const filtered = flats.filter((flat) =>
       flat.city.toLowerCase().includes(query)
     );
-
     setSearch(filtered);
   };
 
@@ -103,7 +107,6 @@ const FlatTable: React.FC<FlatTableProps> = ({
     const filtered = flats.filter(
       (flat) => flat.rentPrice >= min && flat.rentPrice <= max
     );
-
     setSearch(filtered);
   };
 
@@ -111,7 +114,7 @@ const FlatTable: React.FC<FlatTableProps> = ({
     e.preventDefault();
     const min = parseInt(formArea.current?.elements[0].value) || 0;
     const max = parseInt(formArea.current?.elements[1].value) || Infinity;
-    const filtered = search.filter(
+    const filtered = flats.filter(
       (flat) => flat.areaSize >= min && flat.areaSize <= max
     );
     setSearch(filtered);
@@ -178,10 +181,7 @@ const FlatTable: React.FC<FlatTableProps> = ({
             <Input type="number" placeholder="Max" className="w-20" />
             <div className="flex gap-2">
               <Button type="submit">
-                Filter{" "}
-                <span>
-                  <IconAdjustmentsAlt />
-                </span>
+                Filter <IconAdjustmentsAlt />
               </Button>
             </div>
           </div>
@@ -199,18 +199,12 @@ const FlatTable: React.FC<FlatTableProps> = ({
             -
             <Input type="number" placeholder="Max Area" className="w-20" />
             <Button type="submit">
-              Filter{" "}
-              <span>
-                <IconAdjustmentsAlt />
-              </span>
+              Filter <IconAdjustmentsAlt />
             </Button>
           </div>
         </form>
         <Button onClick={handleClean}>
-          Clean{" "}
-          <span>
-            <IconEraser />
-          </span>
+          Clean <IconEraser />
         </Button>
       </div>
 
@@ -220,20 +214,15 @@ const FlatTable: React.FC<FlatTableProps> = ({
       >
         {view === "table" ? (
           <span className="flex items-center gap-2">
-            View Cards
-            <span>
-              <IconLayoutDashboard />
-            </span>
+            View Cards <IconLayoutDashboard />
           </span>
         ) : (
           <span className="flex items-center gap-2">
-            View Table
-            <span>
-              <IconTable />
-            </span>
+            View Table <IconTable />
           </span>
         )}
       </Button>
+
       {view === "table" ? (
         <Table className="container mx-auto ">
           <TableCaption>List of Flats</TableCaption>

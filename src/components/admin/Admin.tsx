@@ -12,7 +12,7 @@ import {
   IconEraser,
   IconAdjustmentsAlt,
   IconSortDescending,
-} from "@tabler/icons-react";
+} from "@/components/icons";
 import { Button } from "../ui/button";
 import { useEffect, useState } from "react";
 import { UserService } from "@/services/user/userServices";

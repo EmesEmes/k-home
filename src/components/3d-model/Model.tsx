@@ -194,15 +194,15 @@ export default function Model() {
   const [isInSelectionMode, setIsInSelectionMode] = useState(false);
   
   const positions = {
-    cocina: {
+    Kitchen: {
       camera: [0.84, 1.87, 2.51],
       target: [13, 1.7, -9]
     },
-    sala: {
+    StayRoom: {
       camera: [0.69, 2.35, 2.33],
       target: [-4.5, 1, -4.5]
     },
-    habitacion: {
+    BedRoom: {
       camera: [-0.62, 3.01, -3.02],
       target: [-10, -5, 5]
     }
@@ -292,8 +292,8 @@ export default function Model() {
           });
         }} style={buttonStyle}>Aerial View</button>
         <button onClick={() => goToPosition('Kitchen')} style={buttonStyle}>Kitcken</button>
-        <button onClick={() => goToPosition('Stay Room')} style={buttonStyle}>Stay Room</button>
-        <button onClick={() => goToPosition('Bed Room')} style={buttonStyle}>Bed Room</button>
+        <button onClick={() => goToPosition('StayRoom')} style={buttonStyle}>Stay Room</button>
+        <button onClick={() => goToPosition('BedRoom')} style={buttonStyle}>Bed Room</button>
       </div>
       {/* <DebuggerOverlay position={debugInfo.position} target={debugInfo.target} /> */}
     </>

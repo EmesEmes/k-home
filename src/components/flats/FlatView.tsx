@@ -32,7 +32,7 @@ import {
   IconNumber,
   IconPhone,
   IconUser,
-} from "@tabler/icons-react";
+} from "@/components/icons";
 import FlatGallery from "../flatGallery/FlatGallery";
 
 import { loadStripe } from "@stripe/stripe-js";

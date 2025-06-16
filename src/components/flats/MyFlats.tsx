@@ -6,7 +6,7 @@ import { FlatsServices } from "@/services/flats/flatsServices";
 import FlatTable from "@/components/tableFlats/FlatTable";
 import { Button } from "../ui/button";
 import { Link } from "react-router";
-import { IconPlus, IconEdit } from "@tabler/icons-react";
+import { IconPlus } from "@/components/icons";
 
 
 const MyFlats: React.FC = () => {

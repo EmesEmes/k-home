@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { IconEdit, IconTrash } from "@tabler/icons-react";
+import { IconEdit, IconTrash } from "@/components/icons";
 import { useUser } from "@/context/UserContext";
 import { useLogout } from "@/services/logout";
 
