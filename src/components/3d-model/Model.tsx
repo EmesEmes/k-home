@@ -290,12 +290,12 @@ export default function Model() {
             endTarget: [0, 0, 0],
             progress: 0
           });
-        }} style={buttonStyle}>Vista Aérea</button>
-        <button onClick={() => goToPosition('cocina')} style={buttonStyle}>Cocina</button>
-        <button onClick={() => goToPosition('sala')} style={buttonStyle}>Sala</button>
-        <button onClick={() => goToPosition('habitacion')} style={buttonStyle}>Habitación</button>
+        }} style={buttonStyle}>Aerial View</button>
+        <button onClick={() => goToPosition('Kitchen')} style={buttonStyle}>Kitcken</button>
+        <button onClick={() => goToPosition('Stay Room')} style={buttonStyle}>Stay Room</button>
+        <button onClick={() => goToPosition('Bed Room')} style={buttonStyle}>Bed Room</button>
       </div>
-      <DebuggerOverlay position={debugInfo.position} target={debugInfo.target} />
+      {/* <DebuggerOverlay position={debugInfo.position} target={debugInfo.target} /> */}
     </>
   );
 }
@@ -385,7 +385,7 @@ function SmoothCameraController({ animationState, updateDebugInfo, setAnimatingC
 
 const buttonStyle = {
   padding: '8px 16px',
-  backgroundColor: '#FF4900',
+  backgroundColor: '#006BE3',
   color: 'white',
   border: 'none',
   borderRadius: '4px',

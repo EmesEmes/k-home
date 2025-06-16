@@ -12,6 +12,8 @@ import EditFlat from "./components/flats/EditFlat";
 import Profile from "./components/profile/Profile";
 import Admin from "./components/admin/Admin";
 import EditProfile from "./components/profile/editProfile";
+import SuccessfulPayment from "./components/payments/SuccessfulPayment";
+import CanceledPayment from "./components/payments/CanceledPayment";
 
 const App = () => {
   return (
@@ -29,6 +31,8 @@ const App = () => {
         <Route path="/profile/:idProfile" element={<Profile />} />
         <Route path="/edit-profile/:idProfile" element={<EditProfile />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/pago-exitoso" element={<SuccessfulPayment />} />
+        <Route path="/pago-cancelado" element={<CanceledPayment />} />
       </Routes>
     </ThemeProvider>
   );

@@ -35,6 +35,8 @@ import {
 } from "@tabler/icons-react";
 import FlatGallery from "../flatGallery/FlatGallery";
 
+import { loadStripe } from "@stripe/stripe-js";
+
 interface Flat {
   _id: string;
   ownerId: string;
@@ -68,6 +70,8 @@ const FlatView = () => {
   const { idFlat } = useParams<{ idFlat: string }>();
   const form = useRef<HTMLFormElement>(null);
   const responseForm = useRef<HTMLFormElement>(null);
+
+  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
   // Paso 1: Obtener el flat desde el backend
   useEffect(() => {
@@ -212,6 +216,29 @@ const FlatView = () => {
     return "593" + phone.slice(1);
   };
 
+  const handlePay = async (flatId: string) => {
+    try {
+      const res = await fetch(
+        "http://localhost:8080/api/payments/create-checkout-session",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ flatId }),
+        }
+      );
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url; // redirige a Stripe
+      } else {
+        console.error("Error al obtener la URL de Stripe", data);
+      }
+    } catch (err) {
+      console.error("Error al iniciar el pago:", err);
+    }
+  };
+
   // Mostrar skeleton mientras cargan los datos
   if (!flat || !owner) {
     return (
@@ -239,18 +266,18 @@ const FlatView = () => {
               alt="flat"
               className="rounded-lg shadow-md"
             /> */}
-            <FlatGallery images={flat.images}/>
+            <FlatGallery images={flat.images} />
             <div>
               <FlatMap
-  center={{ lat: flat.latitude, lng: flat.longitude }} // centro del mapa en el flat
-  singleMarker={true}
-  zoom={18}
-/>
+                center={{ lat: flat.latitude, lng: flat.longitude }} // centro del mapa en el flat
+                singleMarker={true}
+                zoom={18}
+              />
             </div>
           </div>
 
           {currentUser?._id === flat.ownerId && (
-            <Button className="mt-4 w-20 bg-indigo-700 shadow-md shadow-gray-700">
+            <Button className="mt-4 w-[200px] bg-primary shadow-md shadow-gray-700">
               <Link
                 to={`/flat-edit/${flat._id}`}
                 className="flex items-center gap-4"
@@ -260,6 +287,14 @@ const FlatView = () => {
                   <IconEdit />
                 </span>
               </Link>
+            </Button>
+          )}
+          {currentUser?._id === flat.ownerId && (
+            <Button
+              onClick={() => handlePay(flat._id)}
+              className="bg-primary w-[200px] shadow-md shadow-gray-700"
+            >
+              Destacar publicación
             </Button>
           )}
 

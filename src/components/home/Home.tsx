@@ -5,8 +5,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/context/UserContext";
 import FlatTable from "../tableFlats/FlatTable";
 import Model from "../3d-model/Model";
-import { defineConfig } from 'vite';
+import { defineConfig } from "vite";
 import FlatMap from "../map/Map";
+import PremiumFlats from "../premiumFlats/PremiumFlats";
 
 const Home = () => {
   const [flats, setFlats] = useState([]);
@@ -29,36 +30,36 @@ const Home = () => {
   }, []);
 
   useEffect(() => {
-  const fetchFavorites = async () => {
-    if (!currentUser || !token) {
-      setFavorites([]);
-      return;
-    }
-
-    const flatsService = new FlatsServices();
-    const result = await flatsService.getFavorites(currentUser._id, token);
-
-    if (result.success && result.data) {
-      // result.data es arreglo de Flat
-      const ids = (result.data as Flat[]).map((f) => f._id);
-      setFavorites(ids);
-    } else {
-      setFavorites([]);
-      if (!result.success) {
-        toast({
-          title: "Error",
-          variant: "destructive",
-          description: result.message || "No se pudieron cargar favoritos.",
-        });
+    const fetchFavorites = async () => {
+      if (!currentUser || !token) {
+        setFavorites([]);
+        return;
       }
-    }
-  };
 
-  fetchFavorites();
-}, [currentUser, token, toast]);
+      const flatsService = new FlatsServices();
+      const result = await flatsService.getFavorites(currentUser._id, token);
+
+      if (result.success && result.data) {
+        // result.data es arreglo de Flat
+        const ids = (result.data as Flat[]).map((f) => f._id);
+        setFavorites(ids);
+      } else {
+        setFavorites([]);
+        if (!result.success) {
+          toast({
+            title: "Error",
+            variant: "destructive",
+            description: result.message || "No se pudieron cargar favoritos.",
+          });
+        }
+      }
+    };
+
+    fetchFavorites();
+  }, [currentUser, token, toast]);
 
   const toggleFavorite = async (flatId: string) => {
-    console.log(flatId)
+    console.log(flatId);
     // 4.a) Verificamos que esté autenticado
     if (!currentUser || !token) {
       toast({
@@ -99,7 +100,7 @@ const Home = () => {
   };
   return (
     <>
-    <div className="relative mb-12">
+      <div className="relative mb-12">
         <div className="w-full h-[500px] rounded-xl overflow-hidden">
           <img
             src="/hero.png"
@@ -117,33 +118,38 @@ const Home = () => {
           </p>
         </div>
       </div>
-    <main>
-      <div className="container mx-auto h-[80vh] mb-40">
-        <Model />
-      </div>
-      <FlatMap
-  center={ { lat: -0.18, lng: -78.47 }} // Quito como fallback
-  flats={flats}
-  zoom={7}
-/>
-      <FlatTable
-        flats={flats}
-        favorites={favorites}
-        onToggleFavorite={toggleFavorite}
-      />
-    </main>
-    <footer className="bg-primary ">
-      <div className="grid grid-cols-2 p-6 items-center container mx-auto">
-        <div>
-          <img src="/logo-white.svg" alt="LogoBlanco" />
+      <main>
+        <div className="container mx-auto h-[80vh] mb-40">
+          <Model />
         </div>
-        <div>
-          <p className="text-white">
-            Copyright © 2025 EI Solutions, Todos los derechos reservados.
-          </p>
+        <div className="bg-gradient-to-r from-indigo-400 to-cyan-400 py-8">
+          <PremiumFlats flats={flats}/>
         </div>
-      </div>
-    </footer>
+        <div className="max-w-[1200px] mx-auto mt-10">
+          <FlatMap
+            center={{ lat: -0.18, lng: -78.47 }} // Quito como fallback
+            flats={flats}
+            zoom={7}
+          />
+        </div>
+        <FlatTable
+          flats={flats}
+          favorites={favorites}
+          onToggleFavorite={toggleFavorite}
+        />
+      </main>
+      <footer className="bg-primary ">
+        <div className="grid grid-cols-2 p-6 items-center container mx-auto">
+          <div>
+            <img src="/logo-white.svg" alt="LogoBlanco" />
+          </div>
+          <div>
+            <p className="text-white">
+              Copyright © 2025 EI Solutions, Todos los derechos reservados.
+            </p>
+          </div>
+        </div>
+      </footer>
     </>
   );
 };

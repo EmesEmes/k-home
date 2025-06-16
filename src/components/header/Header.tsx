@@ -38,7 +38,7 @@ export default function Header() {
       >
         <div className="flex items-stretch lg:flex-1">
           <Link to="/" className="-m-1.5 p-1.5 flex items-center gap-x-2">
-            <span className="bg-[url(/logo.svg)] bg-no-repeat w-[10.2rem] h-12 dark:bg-[url(/logo-white.svg)]" />
+            <span className="bg-[url(/logo-blue.svg)] bg-no-repeat w-[10.2rem] h-12 dark:bg-[url(/logo-white.svg)]" />
           </Link>
         </div>
 
