@@ -62,6 +62,7 @@ export class UserService {
 
       const data = await response.json();
       console.log("Respuesta del backend:", data);
+      return data
     } catch (error) {
       console.error(error);
     }

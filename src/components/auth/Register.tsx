@@ -178,22 +178,22 @@ const Register = () => {
 
 
     const createUser = new UserService();
-    const example =await createUser.register(newUser);
+    const example = await createUser.register(newUser);
     console.log(example)
-    // if(example?.success){
-    //   toast({
-    //     title: "User created successfully",
-    //     description: "Verify your email to continue",
-    //   });
-    //   navigate("/login");
+    if(example?.success){
+      toast({
+        title: "User created successfully",
+        description: "Verify your email to continue",
+      });
+      navigate("/login");
 
-    // } else {
-    //   toast({
-    //     title: "Error",
-    //     variant: "destructive",
-    //     description: example?.error,
-    //   });
-    // }
+    } else {
+      toast({
+        title: "Error",
+        variant: "destructive",
+        description: example?.error,
+      });
+    }
   };
 
   if(userProfile) {

@@ -1,158 +1,190 @@
-
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, Environment, useGLTF, Html } from '@react-three/drei';
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import * as THREE from 'three';
 
 function Modelo({ selectedFurniture, furnitureColor, isInSelectionMode, onObjectSelected }) {
-  const { scene } = useGLTF('/modelo.glb');
+  // Preload del modelo para evitar recargas
+  const { scene } = useGLTF('/modelo2.glb', true);
   const [furnitureParts, setFurnitureParts] = useState({});
   const [meshList, setMeshList] = useState([]);
+  const processedMeshes = useRef(new Set());
   
-  // Detectar y catalogar todos los objetos del modelo
-  useEffect(() => {
-    const muebles = {};
-    const allMeshes = [];
+  // Clonar la escena para evitar mutaciones del modelo original
+  const clonedScene = useMemo(() => {
+    const cloned = scene.clone();
     
-    // Recorrer todos los objetos y catalogarlos
-    scene.traverse((object) => {
+    // Optimizar todos los materiales una sola vez
+    cloned.traverse((object) => {
       if (object.isMesh) {
-        // Guardar el material original
-        object.userData.originalMaterial = object.material.clone();
-        
-        // Agregar a la lista de meshes
-        allMeshes.push({
-          name: object.name,
-          object: object
-        });
-        
-        // Intentar catalogar por nombres comunes (ajustar según tu modelo)
-        const nameLower = object.name.toLowerCase();
-        if (nameLower.includes('sofa') || nameLower.includes('couch')) {
-          muebles.sofa = object;
-        } else if (nameLower.includes('mesa') || nameLower.includes('table')) {
-          muebles.mesa = object;
-        } else if (nameLower.includes('silla') || nameLower.includes('chair')) {
-          muebles.silla = object;
-        } else if (nameLower.includes('cama') || nameLower.includes('bed')) {
-          muebles.cama = object;
+        // Compartir geometrías cuando sea posible
+        if (object.geometry.userData.optimized) {
+          // Ya optimizada, usar referencia compartida
+        } else {
+          // Optimizar geometría
+          object.geometry.computeBoundingBox();
+          object.geometry.computeBoundingSphere();
+          object.geometry.userData.optimized = true;
         }
         
-        // Métodos alternativos de identificación por estructura de nombre
-        // Por ejemplo, nombres con formato "Object_123"
-        if (nameLower.match(/object_\d+/)) {
-          const id = nameLower.split('_')[1];
-          // Aquí puedes mapear IDs específicos si los conoces
-          if (id === '123') muebles.sofa = object;
-          if (id === '124') muebles.mesa = object;
-          // etc.
+        // Optimizar materiales
+        if (object.material && !object.material.userData.optimized) {
+          // Reducir precisión innecesaria
+          if (object.material.map) {
+            object.material.map.generateMipmaps = true;
+            object.material.map.minFilter = THREE.LinearMipmapLinearFilter;
+            object.material.map.magFilter = THREE.LinearFilter;
+          }
+          
+          // Configurar frustum culling
+          object.frustumCulled = true;
+          
+          // Marcar como optimizado
+          object.material.userData.optimized = true;
         }
-        
-        // Imprimir en consola para depuración (nombres ordenados alfabéticamente)
-        // console.log("Objeto encontrado:", object.name);
       }
     });
     
-    // Ordenar la lista de meshes por nombre para facilitar la búsqueda
-    allMeshes.sort((a, b) => a.name.localeCompare(b.name));
-    setMeshList(allMeshes);
-    
-    setFurnitureParts(muebles);
-    
+    return cloned;
   }, [scene]);
   
-  // Modo de selección directa
+  // Memoizar el procesamiento de objetos para evitar re-cálculos
+  const processedObjects = useMemo(() => {
+    const muebles = {};
+    const allMeshes = [];
+    
+    clonedScene.traverse((object) => {
+      if (object.isMesh) {
+        // Guardar el material original solo una vez
+        if (!object.userData.originalMaterial) {
+          object.userData.originalMaterial = object.material.clone();
+        }
+        
+        const meshData = {
+          name: object.name,
+          object: object,
+          boundingBox: new THREE.Box3().setFromObject(object),
+          isSmallDetail: false
+        };
+        
+        // Determinar si es un detalle pequeño
+        const size = meshData.boundingBox.getSize(new THREE.Vector3());
+        const maxDimension = Math.max(size.x, size.y, size.z);
+        meshData.isSmallDetail = maxDimension < 0.3;
+        
+        allMeshes.push(meshData);
+        
+        // Catalogar muebles (versión optimizada)
+        const nameLower = object.name.toLowerCase();
+        const furnitureTypes = {
+          sofa: ['sofa', 'couch', 'sillon'],
+          mesa: ['mesa', 'table', 'escritorio'],
+          silla: ['silla', 'chair', 'banco'],
+          cama: ['cama', 'bed', 'colchon'],
+          lampara: ['lamp', 'luz', 'light'],
+          tv: ['tv', 'television', 'monitor']
+        };
+        
+        for (const [type, keywords] of Object.entries(furnitureTypes)) {
+          if (keywords.some(keyword => nameLower.includes(keyword))) {
+            if (!muebles[type]) muebles[type] = [];
+            muebles[type].push(object);
+            break;
+          }
+        }
+      }
+    });
+    
+    return { muebles, allMeshes };
+  }, [clonedScene]);
+  
+  // Actualizar estados solo cuando cambien los objetos procesados
   useEffect(() => {
-    if (isInSelectionMode) {
-      // Hacer todos los objetos seleccionables
-      meshList.forEach(({ object }) => {
+    setFurnitureParts(processedObjects.muebles);
+    setMeshList(processedObjects.allMeshes);
+  }, [processedObjects]);
+  
+  // Optimizar el modo de selección con useCallback
+  const updateSelectionMode = useCallback((isActive) => {
+    const highlightMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color('#aaaaff'),
+      emissive: new THREE.Color('#3333ff'),
+      emissiveIntensity: 0.2,
+      transparent: true,
+      opacity: 0.8
+    });
+    
+    meshList.forEach(({ object }) => {
+      if (isActive) {
         object.userData.isSelectable = true;
-        
-        // Cambiar material para indicar que es seleccionable
-        const highlightMaterial = new THREE.MeshStandardMaterial({
-          color: new THREE.Color('#aaaaff'),
-          emissive: new THREE.Color('#3333ff'),
-          emissiveIntensity: 0.2,
-          transparent: true,
-          opacity: 0.8
-        });
-        
-        // Almacenar el material actual (podría ser el original o uno personalizado)
         if (!object.userData.priorToSelectionMaterial) {
           object.userData.priorToSelectionMaterial = object.material;
         }
-        
         object.material = highlightMaterial;
-      });
-    } else {
-      // Restaurar materiales cuando no está en modo selección
-      meshList.forEach(({ object }) => {
+      } else {
         object.userData.isSelectable = false;
-        
-        // Si tiene un material de pre-selección, restaurarlo
         if (object.userData.priorToSelectionMaterial) {
           object.material = object.userData.priorToSelectionMaterial;
           object.userData.priorToSelectionMaterial = null;
         }
-      });
-    }
-  }, [isInSelectionMode, meshList]);
+      }
+    });
+  }, [meshList]);
   
-  // Cambiar el color del mueble seleccionado
   useEffect(() => {
-    if (selectedFurniture && (furnitureParts[selectedFurniture] || selectedFurniture.startsWith('custom:'))) {
-      let part;
-      
-      // Si es una selección personalizada (viene del modo selección directa)
-      if (selectedFurniture.startsWith('custom:')) {
-        const objectName = selectedFurniture.replace('custom:', '');
-        part = meshList.find(m => m.name === objectName)?.object;
-      } else {
-        // Selección normal por categoría
-        part = furnitureParts[selectedFurniture];
-      }
-      
-      if (part) {
-        // Crear un nuevo material con el color seleccionado
-        const newMaterial = new THREE.MeshStandardMaterial({
-          color: new THREE.Color(furnitureColor),
-          roughness: 0.7,
-          metalness: 0.2
-        });
-        
-        // Aplicar el nuevo material
-        part.material = newMaterial;
-      }
+    updateSelectionMode(isInSelectionMode);
+  }, [isInSelectionMode, updateSelectionMode]);
+  
+  // Optimizar cambio de colores con memoización
+  const updateFurnitureColor = useCallback(() => {
+    if (!selectedFurniture) return;
+    
+    let targetObjects = [];
+    
+    if (selectedFurniture.startsWith('custom:')) {
+      const objectName = selectedFurniture.replace('custom:', '');
+      const found = meshList.find(m => m.name === objectName)?.object;
+      if (found) targetObjects = [found];
+    } else {
+      targetObjects = furnitureParts[selectedFurniture] || [];
+      if (!Array.isArray(targetObjects)) targetObjects = [targetObjects];
     }
+    
+    // Crear material una sola vez y reutilizarlo
+    const newMaterial = new THREE.MeshStandardMaterial({
+      color: new THREE.Color(furnitureColor),
+      roughness: 0.7,
+      metalness: 0.2
+    });
+    
+    targetObjects.forEach(object => {
+      if (object) object.material = newMaterial;
+    });
   }, [selectedFurniture, furnitureColor, furnitureParts, meshList]);
   
-  // Manejar clicks en objetos (para modo selección)
-  const handleClick = (event) => {
-    if (!isInSelectionMode) return;
+  useEffect(() => {
+    updateFurnitureColor();
+  }, [updateFurnitureColor]);
+  
+  // Optimizar el manejo de clicks
+  const handleClick = useCallback((event) => {
+    if (!isInSelectionMode || !event.object.userData.isSelectable) return;
     
-    // Prevenir que el click se propague al canvas
     event.stopPropagation();
+    onObjectSelected(event.object.name);
     
-    // Si hizo click en un objeto seleccionable
-    if (event.object.userData.isSelectable) {
-      console.log("Objeto seleccionado:", event.object.name);
-      
-      // Notificar la selección
-      onObjectSelected(event.object.name);
-      
-      // Restaurar materiales
-      meshList.forEach(({ object }) => {
-        if (object.userData.priorToSelectionMaterial) {
-          object.material = object.userData.priorToSelectionMaterial;
-          object.userData.priorToSelectionMaterial = null;
-        }
-      });
-    }
-  };
+    // Restaurar materiales de forma más eficiente
+    meshList.forEach(({ object }) => {
+      if (object.userData.priorToSelectionMaterial) {
+        object.material = object.userData.priorToSelectionMaterial;
+        object.userData.priorToSelectionMaterial = null;
+      }
+    });
+  }, [isInSelectionMode, onObjectSelected, meshList]);
   
   return (
     <primitive 
-      object={scene} 
+      object={clonedScene} 
       scale={0.7} 
       position={[-4.5,1,-4.5]} 
       onClick={handleClick}
@@ -160,26 +192,140 @@ function Modelo({ selectedFurniture, furnitureColor, isInSelectionMode, onObject
   );
 }
 
-// Componente separado para el depurador fuera del canvas
-function DebuggerOverlay({ position, target }) {
+// Componente optimizado para renderizado condicional
+function OptimizedLighting() {
   return (
-    <div style={{
-      position: 'absolute',
-      left: '20px',
-      bottom: '20px',
-      background: '#00000088',
-      color: '#fff',
-      padding: '10px',
-      borderRadius: '8px',
-      fontFamily: 'monospace',
-      zIndex: 1000
-    }}>
-      <div><b>Camera Position:</b> [{position.join(', ')}]</div>
-      <div><b>Target:</b> [{target.join(', ')}]</div>
-    </div>
+    <>
+      <ambientLight intensity={0.4} />
+      <directionalLight 
+        position={[10, 10, 10]} 
+        intensity={0.8}
+        castShadow={false} // Desactivar sombras para mejor rendimiento
+      />
+      <pointLight 
+        position={[-4.5, 3, -4.5]} 
+        intensity={0.5} 
+        color="#ffffff"
+        distance={20} // Limitar alcance para optimizar
+      />
+    </>
   );
 }
 
+// Controlador de cámara optimizado
+function SmoothCameraController({ animationState, updateDebugInfo, setAnimatingCamera }) {
+  const { camera, controls } = useThree();
+  const animationRef = useRef();
+  
+  const lerp = useCallback((start, end, progress) => {
+    return start + (end - start) * progress;
+  }, []);
+  
+  const lerpVector = useCallback((start, end, progress) => {
+    return [
+      lerp(start[0], end[0], progress),
+      lerp(start[1], end[1], progress),
+      lerp(start[2], end[2], progress)
+    ];
+  }, [lerp]);
+  
+  // Optimizar la animación con requestAnimationFrame
+  useFrame(() => {
+    if (animationState && typeof animationState === 'object') {
+      const { startCamera, endCamera, startTarget, endTarget, progress } = animationState;
+      
+      if (progress >= 1) {
+        camera.position.set(...endCamera);
+        if (controls) {
+          controls.target.set(...endTarget);
+          controls.update();
+        }
+        
+        updateDebugInfo(
+          endCamera.map(v => v.toFixed(2)),
+          endTarget.map(v => v.toFixed(2))
+        );
+        
+        setAnimatingCamera(false);
+        return;
+      }
+      
+      const newCameraPos = lerpVector(startCamera, endCamera, progress);
+      const newTargetPos = lerpVector(startTarget, endTarget, progress);
+      
+      camera.position.set(...newCameraPos);
+      if (controls) {
+        controls.target.set(...newTargetPos);
+        controls.update();
+      }
+      
+      updateDebugInfo(
+        newCameraPos.map(v => v.toFixed(2)),
+        newTargetPos.map(v => v.toFixed(2))
+      );
+      
+      setAnimatingCamera({
+        ...animationState,
+        progress: progress + 0.03
+      });
+    } else if (!animationState && controls) {
+      // Solo actualizar debug info cuando sea necesario
+      if (animationRef.current % 30 === 0) { // Cada 30 frames
+        updateDebugInfo(
+          [camera.position.x.toFixed(2), camera.position.y.toFixed(2), camera.position.z.toFixed(2)],
+          [controls.target.x.toFixed(2), controls.target.y.toFixed(2), controls.target.z.toFixed(2)]
+        );
+      }
+      animationRef.current = (animationRef.current || 0) + 1;
+    }
+  });
+  
+  return (
+    <OrbitControls 
+      makeDefault
+      enableRotate={true}
+      enabled={!animationState}
+      enableDamping={true}
+      dampingFactor={0.05}
+      minDistance={2}
+      maxDistance={50}
+      maxPolarAngle={Math.PI / 2}
+    />
+  );
+}
+
+// Loading component optimizado
+function LoadingFallback() {
+  return (
+    <Html center>
+      <div style={{
+        color: 'white',
+        fontSize: '18px',
+        textAlign: 'center',
+        backgroundColor: 'rgba(0,0,0,0.8)',
+        padding: '20px',
+        borderRadius: '10px'
+      }}>
+        <div>Cargando modelo 3D...</div>
+        <div style={{ 
+          width: '200px', 
+          height: '4px', 
+          backgroundColor: '#333', 
+          marginTop: '10px',
+          borderRadius: '2px',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            width: '100%',
+            height: '100%',
+            backgroundColor: '#006BE3',
+            animation: 'loading 2s infinite ease-in-out'
+          }} />
+        </div>
+      </div>
+    </Html>
+  );
+}
 
 export default function Model() {
   const [cameraPosition] = useState([0, 10, -1]);
@@ -193,7 +339,8 @@ export default function Model() {
   const [furnitureColor, setFurnitureColor] = useState('#ffffff');
   const [isInSelectionMode, setIsInSelectionMode] = useState(false);
   
-  const positions = {
+  // Memoizar las posiciones para evitar re-creación
+  const positions = useMemo(() => ({
     Kitchen: {
       camera: [0.84, 1.87, 2.51],
       target: [13, 1.7, -9]
@@ -206,9 +353,10 @@ export default function Model() {
       camera: [-0.62, 3.01, -3.02],
       target: [-10, -5, 5]
     }
-  };
+  }), []);
 
-  const goToPosition = (position) => {
+  // Optimizar función de navegación
+  const goToPosition = useCallback((position) => {
     setAnimatingCamera({
       startCamera: [...debugInfo.position.map(p => parseFloat(p))],
       endCamera: positions[position].camera,
@@ -216,51 +364,65 @@ export default function Model() {
       endTarget: positions[position].target,
       progress: 0
     });
-  };
+  }, [debugInfo.position, debugInfo.target, positions]);
 
-  // Función para actualizar la información de depuración
-  const updateDebugInfo = (pos, tgt) => {
-    setDebugInfo({
-      position: pos,
-      target: tgt
-    });
-  };
+  const updateDebugInfo = useCallback((pos, tgt) => {
+    setDebugInfo({ position: pos, target: tgt });
+  }, []);
 
-  // Manejar la selección de muebles
-  const handleSelectFurniture = (furniture) => {
+  const handleSelectFurniture = useCallback((furniture) => {
     setSelectedFurniture(furniture);
     setSelectedObjectName(furniture);
-  };
+  }, []);
   
-  // Manejar la selección directa de objetos
-  const handleObjectSelected = (objectName) => {
+  const handleObjectSelected = useCallback((objectName) => {
     setSelectedFurniture(`custom:${objectName}`);
     setSelectedObjectName(objectName);
     setIsInSelectionMode(false);
-  };
+  }, []);
   
-  // Togglear el modo de selección
-  const toggleSelectionMode = () => {
-    setIsInSelectionMode(!isInSelectionMode);
-  };
+  const toggleSelectionMode = useCallback(() => {
+    setIsInSelectionMode(prev => !prev);
+  }, []);
+
+  // Memoizar los botones para evitar re-renders
+  const navigationButtons = useMemo(() => (
+    <div className="buttons-container grid items-center justify-center" style={{ 
+      zIndex: 100,
+      display: 'flex',
+      gap: '10px'
+    }}>
+      <button onClick={() => {
+        setAnimatingCamera({
+          startCamera: [...debugInfo.position.map(p => parseFloat(p))],
+          endCamera: [0, 10, -1],
+          startTarget: [...debugInfo.target.map(t => parseFloat(t))],
+          endTarget: [0, 0, 0],
+          progress: 0
+        });
+      }} style={buttonStyle}>Aerial View</button>
+      <button onClick={() => goToPosition('Kitchen')} style={buttonStyle}>Kitchen</button>
+      <button onClick={() => goToPosition('StayRoom')} style={buttonStyle}>Stay Room</button>
+      <button onClick={() => goToPosition('BedRoom')} style={buttonStyle}>Bed Room</button>
+    </div>
+  ), [debugInfo, goToPosition]);
 
   return (
     <>
-      
-      
-      {/* <FurnitureCustomizer 
-        onSelectFurniture={handleSelectFurniture}
-        onSelectColor={setFurnitureColor}
-        onToggleSelectionMode={toggleSelectionMode}
-        isInSelectionMode={isInSelectionMode}
-        selectedObject={selectedObjectName}
-      /> */}
-      
-      <Canvas camera={{ position: cameraPosition, fov: 65 }} className='w-screen h-screen'>
-        <ambientLight intensity={0.6} />
-        <directionalLight position={[10, 10, 10]} intensity={0.8} />
-        <pointLight position={[-4.5, 3, -4.5]} intensity={0.5} color="#ffffff" />
-        <Suspense fallback={null}>
+      <Canvas 
+        camera={{ position: cameraPosition, fov: 65 }} 
+        className='w-screen h-screen'
+        gl={{
+          antialias: window.devicePixelRatio < 2,
+          alpha: false,
+          powerPreference: "high-performance",
+          stencil: false,
+          depth: true
+        }}
+        dpr={Math.min(window.devicePixelRatio, 2)}
+      >
+        <OptimizedLighting />
+        <Suspense fallback={<LoadingFallback />}>
           <Modelo 
             selectedFurniture={selectedFurniture}
             furnitureColor={furnitureColor}
@@ -275,113 +437,13 @@ export default function Model() {
           />
         </Suspense>
       </Canvas>
-      <div className="buttons-container grid items-center justify-center" style={{ 
-        
-        zIndex: 100,
-        display: 'flex',
-
-        gap: '10px'
-      }}>
-        <button onClick={() => {
-          setAnimatingCamera({
-            startCamera: [...debugInfo.position.map(p => parseFloat(p))],
-            endCamera: [0, 10, -1],
-            startTarget: [...debugInfo.target.map(t => parseFloat(t))],
-            endTarget: [0, 0, 0],
-            progress: 0
-          });
-        }} style={buttonStyle}>Aerial View</button>
-        <button onClick={() => goToPosition('Kitchen')} style={buttonStyle}>Kitcken</button>
-        <button onClick={() => goToPosition('StayRoom')} style={buttonStyle}>Stay Room</button>
-        <button onClick={() => goToPosition('BedRoom')} style={buttonStyle}>Bed Room</button>
-      </div>
-      {/* <DebuggerOverlay position={debugInfo.position} target={debugInfo.target} /> */}
+      {navigationButtons}
     </>
   );
 }
 
-// Nuevo controlador de cámara con animación suave
-function SmoothCameraController({ animationState, updateDebugInfo, setAnimatingCamera }) {
-  const { camera, controls } = useThree();
-  
-  // Función para interpolar entre dos valores
-  const lerp = (start, end, progress) => {
-    return start + (end - start) * progress;
-  };
-  
-  // Función para interpolar entre dos vectores 3D
-  const lerpVector = (start, end, progress) => {
-    return [
-      lerp(start[0], end[0], progress),
-      lerp(start[1], end[1], progress),
-      lerp(start[2], end[2], progress)
-    ];
-  };
-  
-  // Actualizar la posición de la cámara en cada frame
-  useFrame(() => {
-    if (animationState && typeof animationState === 'object') {
-      // Si hay una animación en progreso
-      const { startCamera, endCamera, startTarget, endTarget, progress } = animationState;
-      
-      // Si la animación ya terminó
-      if (progress >= 1) {
-        // Establecer exactamente la posición final
-        camera.position.set(...endCamera);
-        if (controls) {
-          controls.target.set(...endTarget);
-          controls.update();
-        }
-        
-        // Actualizar la información de depuración con los valores exactos
-        updateDebugInfo(
-          endCamera.map(v => v.toFixed(2)),
-          endTarget.map(v => v.toFixed(2))
-        );
-        
-        setAnimatingCamera(false);
-        return;
-      }
-      
-      // Calcular las nuevas posiciones interpoladas
-      const newCameraPos = lerpVector(startCamera, endCamera, progress);
-      const newTargetPos = lerpVector(startTarget, endTarget, progress);
-      
-      // Actualizar la cámara y el target
-      camera.position.set(...newCameraPos);
-      if (controls) {
-        controls.target.set(...newTargetPos);
-        controls.update();
-      }
-      
-      // Actualizar la información de depuración
-      updateDebugInfo(
-        newCameraPos.map(v => v.toFixed(2)),
-        newTargetPos.map(v => v.toFixed(2))
-      );
-      
-      // Incrementar el progreso de la animación
-      setAnimatingCamera({
-        ...animationState,
-        progress: progress + 0.03 // Velocidad de la animación (más pequeño = más lento)
-      });
-    }
-    
-    // Para la actualización regular cuando no hay animación
-    if (!animationState && controls) {
-      updateDebugInfo(
-        [camera.position.x.toFixed(2), camera.position.y.toFixed(2), camera.position.z.toFixed(2)],
-        [controls.target.x.toFixed(2), controls.target.y.toFixed(2), controls.target.z.toFixed(2)]
-      );
-    }
-  });
-  
-  return <OrbitControls 
-    makeDefault
-    enableRotate={true}
-    enabled={!animationState} // Deshabilitar controles durante la animación
-  />;
-}
+// Precargar el modelo para evitar delays
+useGLTF.preload('/modelo2.glb');
 
 const buttonStyle = {
   padding: '8px 16px',

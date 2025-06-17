@@ -123,7 +123,7 @@ export default function Header() {
                       Si no, uso AvatarFallback con iniciales.
                     */}
                     {currentUser.image ? (
-                      <AvatarImage src={currentUser.image} />
+                      <AvatarImage src={currentUser.image} className="object-cover"/>
                     ) : (
                       <AvatarFallback>
   {userProfile?.firstname ? userProfile.firstname.charAt(0) : ""}
