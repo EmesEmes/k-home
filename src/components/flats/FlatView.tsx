@@ -94,7 +94,11 @@ const FlatView = () => {
           longitude: f.longitude,
           yearBuilt: f.yearBuilt,
           rentPrice: f.rentPrice,
-          dateAvailable: new Date(f.dateAvailable).toLocaleDateString(),
+          dateAvailable: new Date(f.dateAvailable).toLocaleDateString("en-EN", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  }),
           images: Array.isArray(f.images) ? f.images : [f.images],
         });
       } else {

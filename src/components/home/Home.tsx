@@ -8,6 +8,7 @@ import Model from "../3d-model/Model";
 import { defineConfig } from "vite";
 import FlatMap from "../map/Map";
 import PremiumFlats from "../premiumFlats/PremiumFlats";
+import HomeTable from "../tableFlats/HomeTable";
 
 const Home = () => {
   const [flats, setFlats] = useState([]);
@@ -101,7 +102,7 @@ const Home = () => {
   return (
     <>
       <div className="relative mb-12">
-        <div className="w-full h-[500px] rounded-xl overflow-hidden">
+        <div className="w-full h-[500px] overflow-hidden">
           <img
             src="/hero.png"
             alt="Beautiful vacation destination"
@@ -145,11 +146,8 @@ const Home = () => {
             zoom={7}
           />
         </div>
-        <FlatTable
-          flats={flats}
-          favorites={favorites}
-          onToggleFavorite={toggleFavorite}
-        />
+        <HomeTable favorites={favorites}
+          onToggleFavorite={toggleFavorite}/>
       </main>
       <footer className="bg-primary ">
         <div className="grid grid-cols-2 p-6 items-center container mx-auto">

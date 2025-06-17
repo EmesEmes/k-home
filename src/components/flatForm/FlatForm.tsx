@@ -95,6 +95,7 @@ const FlatForm: React.FC<FlatFormProps> = ({
     }
   };
 
+  console.log(initialData)
   return (
     <form
       className="my-8"
@@ -123,7 +124,7 @@ const FlatForm: React.FC<FlatFormProps> = ({
             placeholder="Av. Amazonas"
             type="text"
             name="streetname"
-            defaultValue={initialData?.streetname}
+            defaultValue={initialData?.streetName}
             required
           />
         </LabelInputContainer>
@@ -134,7 +135,7 @@ const FlatForm: React.FC<FlatFormProps> = ({
             placeholder="1351"
             type="number"
             name="streetnumber"
-            defaultValue={initialData?.streetnumber}
+            defaultValue={initialData?.streetNumber}
             required
           />
         </LabelInputContainer>
@@ -148,7 +149,7 @@ const FlatForm: React.FC<FlatFormProps> = ({
             placeholder="120"
             type="text"
             name="areasize"
-            defaultValue={initialData?.areasize}
+            defaultValue={initialData?.areaSize}
             required
           />
         </LabelInputContainer>
@@ -159,7 +160,7 @@ const FlatForm: React.FC<FlatFormProps> = ({
             placeholder="2021"
             type="number"
             name="yearbuilt"
-            defaultValue={initialData?.yearbuilt}
+            defaultValue={initialData?.yearBuilt}
             required
           />
         </LabelInputContainer>
@@ -173,65 +174,69 @@ const FlatForm: React.FC<FlatFormProps> = ({
           id="hasac"
           type="checkbox"
           name="hasac"
-          defaultChecked={initialData?.hasac}
+          defaultChecked={initialData?.hasAC}
         />
       </LabelInputContainer>
 
       <div className="bg-gradient-to-r from-transparent via-neutral-300 dark:via-neutral-700 to-transparent my-8 h-[1px] w-full" />
 
-      {/* Inputs de latitud y longitud controlados */}
       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
-        <LabelInputContainer>
-          <Label htmlFor="lat">Latitude</Label>
-          <Input
-            id="lat"
-            placeholder="-0.136564"
-            type="text"
-            name="lat"
-            value={latText}
-            onChange={(e) => {
-              setLatText(e.target.value);
-              const parsed = parseFloat(e.target.value);
-              if (!isNaN(parsed)) setLat(parsed);
-            }}
-            required
-          />
-        </LabelInputContainer>
-        <LabelInputContainer>
-          <Label htmlFor="lng">Longitude</Label>
-          <Input
-            id="lng"
-            placeholder="-78.466265"
-            type="text"
-            name="lng"
-            value={lngText}
-            onChange={(e) => {
-              setLngText(e.target.value);
-              const parsed = parseFloat(e.target.value);
-              if (!isNaN(parsed)) setLng(parsed);
-            }}
-            required
-          />
-        </LabelInputContainer>
+        
+          <LabelInputContainer>
+            <Label htmlFor="lat">Latitude</Label>
+            <Input
+              id="lat"
+              placeholder="-0.136564"
+              type="text"
+              name="lat"  
+              value={latText}
+              onChange={(e) => {
+                setLatText(e.target.value);
+                const parsed = parseFloat(e.target.value);
+                if (!isNaN(parsed)) setLat(parsed);
+              }}
+              required
+            />
+          </LabelInputContainer>
+        
+        
+          <LabelInputContainer>
+            <Label htmlFor="lng">Longitude</Label>
+            <Input
+              id="lng"
+              placeholder="-78.466265"
+              type="text"
+              name="lng"
+              value={lngText}
+              onChange={(e) => {
+                setLngText(e.target.value);
+                const parsed = parseFloat(e.target.value);
+                if (!isNaN(parsed)) setLng(parsed);
+              }}
+              required
+            />
+          </LabelInputContainer>
+        
       </div>
 
-      {/* Mapa clicable para seleccionar ubicación */}
-      <div className="mb-6">
-        <LabelInputContainer>
-          <Label>Selecciona la ubicación en el mapa</Label>
-          <FlatMap
-  center={{ lat: lat || -0.18, lng: lng || -78.47 }} // Quito como fallback
-  singleMarker={true}
-  zoom={6}
-  onClick={(coords) => {
-    setLat(coords.lat);
-    setLng(coords.lng);
-    setLatText(coords.lat.toFixed(6));
-    setLngText(coords.lng.toFixed(6));
-  }}
-/>
-        </LabelInputContainer>
-      </div>
+      {!disableImageUpload && (
+        <div className="mb-6">
+          <LabelInputContainer>
+            <Label>Selecciona la ubicación en el mapa</Label>
+            <FlatMap
+              center={{ lat: lat || -0.18, lng: lng || -78.47 }}
+              singleMarker={true}
+              zoom={6}
+              onClick={(coords) => {
+                setLat(coords.lat);
+                setLng(coords.lng);
+                setLatText(coords.lat.toFixed(6));
+                setLngText(coords.lng.toFixed(6));
+              }}
+            />
+          </LabelInputContainer>
+        </div>
+      )}
 
       <div className="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
         <LabelInputContainer>
@@ -241,7 +246,7 @@ const FlatForm: React.FC<FlatFormProps> = ({
             placeholder="1350"
             type="text"
             name="rentprice"
-            defaultValue={initialData?.rentprice}
+            defaultValue={initialData?.rentPrice}
             required
           />
         </LabelInputContainer>
@@ -251,7 +256,7 @@ const FlatForm: React.FC<FlatFormProps> = ({
             id="dateavailable"
             type="date"
             name="dateavailable"
-            defaultValue={initialData?.dateavailable}
+            defaultValue={new Date(initialData?.dateAvailable).toISOString().split('T')[0]}
             required
           />
         </LabelInputContainer>
@@ -304,7 +309,11 @@ const LabelInputContainer = ({
   children: React.ReactNode;
   className?: string;
 }) => {
-  return <div className={cn("flex flex-col space-y-2 w-full", className)}>{children}</div>;
+  return (
+    <div className={cn("flex flex-col space-y-2 w-full", className)}>
+      {children}
+    </div>
+  );
 };
 
 export default FlatForm;

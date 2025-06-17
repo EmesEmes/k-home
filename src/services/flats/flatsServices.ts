@@ -219,18 +219,29 @@ export class FlatsServices {
     }
   }
 
-  async updateFlat(flatId: string, updatedFlat: any) {
-    const { data, error } = await supabase
-      .from("flats")
-      .update(updatedFlat)
-      .eq("id", flatId);
+  async updateFlat(flatId: string, updatedFlat: any, token: string) {
+  try {
+    const response = await fetch(`http://localhost:8080/flats/${flatId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`, 
+      },
+      body: JSON.stringify(updatedFlat),
+    });
 
-    if (error) {
-      return { success: false, error: error.message };
+    const result = await response.json();
+console.log(response)
+    if (!response.ok || !result.success) {
+      return { success: false, error: result.message || "Error al actualizar" };
     }
 
-    return { success: true, data };
+    return { success: true, data: result.data };
+  } catch (error) {
+    return { success: false, error: error.message };
   }
+}
+
 
   async filterCity(city: string) {
     const { data: flats, error } = await supabase

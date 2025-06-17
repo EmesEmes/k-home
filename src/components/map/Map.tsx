@@ -40,7 +40,6 @@ function ClickHandler({ onClick }: { onClick: (coords: { lat: number; lng: numbe
 
 // Componente principal del mapa
 const FlatMap: React.FC<FlatMapProps> = ({ center, flats = [], singleMarker = false, onClick, zoom }) => {
-  console.log("FlatMap props:", { center, flats });
 
   if (!center) {
     return <p>Error: El centro del mapa no está definido.</p>;
@@ -64,7 +63,7 @@ const FlatMap: React.FC<FlatMapProps> = ({ center, flats = [], singleMarker = fa
               <div >
                 <div className="mb-2">
                   <FlatGallery images={flat.images}/>
-
+                  {flat.isPremium && <p>es premium</p>}
                 </div>
                 <div className="font-bold">{flat.streetName}</div>
                 <div className="mb-4">${flat.rentPrice}</div>

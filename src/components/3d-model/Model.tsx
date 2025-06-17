@@ -299,10 +299,10 @@ function LoadingFallback() {
   return (
     <Html center>
       <div style={{
-        color: 'white',
+        color: 'black',
         fontSize: '18px',
         textAlign: 'center',
-        backgroundColor: 'rgba(0,0,0,0.8)',
+        backgroundColor: '#fff',
         padding: '20px',
         borderRadius: '10px'
       }}>
@@ -411,13 +411,13 @@ export default function Model() {
     <>
       <Canvas 
         camera={{ position: cameraPosition, fov: 65 }} 
-        className='w-screen h-screen'
+        className='w-screen h-screen bg-red-500' 
         gl={{
           antialias: window.devicePixelRatio < 2,
-          alpha: false,
+          alpha: true ,
           powerPreference: "high-performance",
           stencil: false,
-          depth: true
+          depth: true,
         }}
         dpr={Math.min(window.devicePixelRatio, 2)}
       >

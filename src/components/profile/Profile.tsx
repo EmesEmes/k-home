@@ -77,7 +77,7 @@ const Profile = () => {
             <CardHeader>
               <div className="flex justify-center mx-auto w-40 mb-10">
                 <img
-                  src={`https://ggdyznkijkikcjuonxzz.supabase.co/storage/v1/object/public/avatars/${profile.avatar}`}
+                  src={`${profile.image}`}
                   alt="profile"
                 />
               </div>
