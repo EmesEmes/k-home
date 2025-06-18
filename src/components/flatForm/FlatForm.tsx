@@ -94,8 +94,6 @@ const FlatForm: React.FC<FlatFormProps> = ({
       });
     }
   };
-
-  console.log(initialData)
   return (
     <form
       className="my-8"
@@ -256,7 +254,7 @@ const FlatForm: React.FC<FlatFormProps> = ({
             id="dateavailable"
             type="date"
             name="dateavailable"
-            defaultValue={new Date(initialData?.dateAvailable).toISOString().split('T')[0]}
+            defaultValue={initialData?.dateAvailable}
             required
           />
         </LabelInputContainer>

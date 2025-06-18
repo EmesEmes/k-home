@@ -409,9 +409,10 @@ export default function Model() {
 
   return (
     <>
+      <p>advertised by: <a href='https://rivayo.com/' target='_blank' className='text-primary underline'>RIVAYO</a></p>
       <Canvas 
         camera={{ position: cameraPosition, fov: 65 }} 
-        className='w-screen h-screen bg-red-500' 
+        className='w-screen h-screen bg-[url(/model-bg.webp)] rounded-xl' 
         gl={{
           antialias: window.devicePixelRatio < 2,
           alpha: true ,
@@ -438,7 +439,9 @@ export default function Model() {
         </Suspense>
       </Canvas>
       {navigationButtons}
+      
     </>
+    
   );
 }
 

@@ -24,11 +24,11 @@ const FlatsPremium = ({ flats }) => {
             <span className="absolute top-3 left-3 z-10 bg-[#006BE3] flex items-center gap-2 p-2 rounded-lg shadow-md">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                width="36"
-                height="36"
+                width="28"
+                height="28"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="#FFB600"
+                stroke="#FFF"
                 stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -37,7 +37,7 @@ const FlatsPremium = ({ flats }) => {
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />
               </svg>
-              <span className="text-[#FFB600]">Premium</span>
+              <span className="text-white">Premium</span>
             </span>
             <div className="">
               <FlatGallery images={flat.images} />
@@ -53,7 +53,7 @@ const FlatsPremium = ({ flats }) => {
                 </p>
                 <p className="text-sm mt-2 text-gray-300">
                   {flat.areaSize} m² ·{" "}
-                  <span className="font-semibold text-[#006BE3]">
+                  <span className="font-semibold text-white">
                     ${flat.rentPrice}
                   </span>
                 </p>

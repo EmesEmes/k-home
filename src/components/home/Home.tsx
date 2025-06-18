@@ -108,11 +108,11 @@ const Home = () => {
             alt="Beautiful vacation destination"
             className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black opacity-40"></div>
+          <div className="absolute inset-0  bg-black opacity-50"></div>
         </div>
         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center text-white w-full max-w-3xl px-4">
           <h1 className="text-4xl md:text-5xl font-bold mb-6 drop-shadow-lg uppercase">
-            Find your <span className="text-primary">happy place</span>
+            Find your <span className="text-blue-400">happy place</span>
           </h1>
           <p className="text-xl mb-8 drop-shadow-md max-w-xl mx-auto">
             Discover unique homes and experiences around the world.
@@ -133,7 +133,7 @@ const Home = () => {
             />
           </span>
         </h1>
-        <div className="container mx-auto h-[80vh] mb-40 border-[4px] border-[#006BE3] rounded-lg">
+        <div className="container mx-auto h-[80vh] mb-40">
           <Model />
         </div>
         <div className="bg-gradient-to-r from-indigo-400 to-cyan-400 py-8">
